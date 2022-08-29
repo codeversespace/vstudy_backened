@@ -2,7 +2,6 @@
 import MySQLdb
 from configurations.configs import Creds
 import json
-import jsonify
 
 
 class mysql_obj:
@@ -37,8 +36,8 @@ class mysql_obj:
     # if data not exists it will return 0
     def mysql_execute(self, query, fetch_result: bool = True):
         cursor = self.mysql_cursor()
-        cursor.execute(query)
         if fetch_result:
+            cursor.execute(query)
             return self.mysql_fetchall(cursor)
         return cursor.execute(query)
 
