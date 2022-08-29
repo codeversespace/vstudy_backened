@@ -18,6 +18,8 @@ class returnResponse:
                 body["message"] = "Quesiton for given category found"
             if status_code == "2007":
                 body["message"] = "Quesiton for given quiz id found"
+            if status_code == "2008":
+                body["message"] = "Category added"
 
 
         else:
@@ -36,6 +38,8 @@ class returnResponse:
                 body["message"] = "No quesiton for given category found"
             if status_code == "3007":
                 body["message"] = "No quesiton for given quiz id can be found"
+            if status_code == "3008":
+                body["message"] = "Category not added"
 
         return body
 
