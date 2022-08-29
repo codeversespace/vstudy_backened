@@ -106,3 +106,27 @@ async def get_quiz_detail(id: str):
     if not data:
         return responseHandler.responseBody(status_code='3003')
     return responseHandler.responseBody(status_code='2003', data=data)
+
+
+
+##########
+# INSERT #
+##########
+@app.post("/add/category")
+async def add_category(request: Request):
+    data = {}
+    body = await request.json()
+    print(body['title'])
+    print(body['description'])
+    query = f"INSERT INTO categories (cat_title,cat_desc) VALUES ('{body['title']}','{body['description']}')"
+    mysql_handler.mysql_execute(query, fetch_result=False)
+    mysql_handler.commit()
+    print(mysql_handler.mysql_cursor().rowcount)
+    if mysql_handler.mysql_cursor().rowcount < 1:
+        data["status"] = "failed to insert"
+        return responseHandler.responseBody(status_code='3008', data=data)
+    data["status"] = "Category added"
+    return responseHandler.responseBody(status_code='2008', data=data)
+
+# if __name__ == "__main__":
+#     uvicorn.run(app, host="127.0.0.1", port=5049)
