@@ -35,13 +35,6 @@ async def generate_token(request: Request):
     return responseHandler.responseBody(status_code='2001', data=data)
     # return payload
 
-
-# return await request.json()
-# print(payload
-# return
-
-# async def check_if_exists(r)
-# data = mysql_handler.if_exist('users','class','07')
 @app.get("/category")
 async def get_categories():
     query = f"SELECT * from categories"
@@ -92,6 +85,14 @@ async def get_questions_from_category(cat_id: str):
 # get all questions of a given quiz
 @app.get("/question/quiz/{quiz_id}")
 async def get_questions_from_quiz_id(quiz_id: str):
+    query = f"SELECT q_id,content,opt1,opt2,opt3,opt4 FROM mcqs where q_id = {quiz_id};"
+    data = mysql_handler.mysql_execute(query, fetch_result=True)
+    if not data:
+        return responseHandler.responseBody(status_code='3007')
+    return responseHandler.responseBody(status_code='2007', data=data)
+
+@app.get("/question/quiz/all/{quiz_id}")
+async def get_questions_from_quiz_id(quiz_id: str):
     query = f"SELECT * FROM mcqs where q_id = {quiz_id};"
     data = mysql_handler.mysql_execute(query, fetch_result=True)
     if not data:
@@ -108,7 +109,6 @@ async def get_quiz_detail(id: str):
     return responseHandler.responseBody(status_code='2003', data=data)
 
 
-
 ##########
 # INSERT #
 ##########
@@ -116,17 +116,48 @@ async def get_quiz_detail(id: str):
 async def add_category(request: Request):
     data = {}
     body = await request.json()
-    print(body['title'])
-    print(body['description'])
     query = f"INSERT INTO categories (cat_title,cat_desc) VALUES ('{body['title']}','{body['description']}')"
     mysql_handler.mysql_execute(query, fetch_result=False)
     mysql_handler.commit()
-    print(mysql_handler.mysql_cursor().rowcount)
     if mysql_handler.mysql_cursor().rowcount < 1:
         data["status"] = "failed to insert"
         return responseHandler.responseBody(status_code='3008', data=data)
     data["status"] = "Category added"
     return responseHandler.responseBody(status_code='2008', data=data)
 
+
 # if __name__ == "__main__":
 #     uvicorn.run(app, host="127.0.0.1", port=5049)
+
+@app.post("/add/quiz")
+async def add_quiz(request: Request):
+    data = {}
+    body = await request.json()
+    query = f"INSERT INTO quiz (title,description,max_marks,no_of_ques,active,cat_id) VALUES ('{body['title']}','{body['description']}'," \
+            f"'{body['maxMarks']}','{body['numberOfQuestions']}','{body['active']}','{body['cat_id']}')"
+    print(query)
+    mysql_handler.mysql_execute(query, fetch_result=False)
+    mysql_handler.commit()
+    if mysql_handler.mysql_cursor().rowcount < 1:
+        data["status"] = "failed to insert quiz"
+        return responseHandler.responseBody(status_code='3008', data=data)
+    data["status"] = "Quiz added"
+    return responseHandler.responseBody(status_code='2008', data=data)
+
+@app.post("/add/question")
+async def add_quiz(request: Request):
+    data = {}
+    body = await request.json()
+    # will get added by value from UI
+    query = f"INSERT INTO mcqs (q_id,content,opt1,opt2,opt3,opt4,ans,added_by) VALUES ('{body['q_id']}','{body['content']}'," \
+            f"'{body['option1']}','{body['option2']}','{body['option3']}','{body['option4']}','{body['answer']}','{body['added_by']}')"
+    print(query)
+    mysql_handler.mysql_execute(query, fetch_result=False)
+    mysql_handler.commit()
+    if mysql_handler.mysql_cursor().rowcount < 1:
+        data["status"] = "failed to add question"
+        return responseHandler.responseBody(status_code='3008', data=data)
+    data["status"] = "question added"
+    return responseHandler.responseBody(status_code='2008', data=data)
+
+#get questions from quiz id
