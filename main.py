@@ -161,3 +161,48 @@ async def add_quiz(request: Request):
     return responseHandler.responseBody(status_code='2008', data=data)
 
 #get questions from quiz id
+
+
+#add subject
+@app.post("/add/subject")
+async def add_subject(request: Request):
+    data = {}
+    body = await request.json()
+    query = f"INSERT INTO subject (sub_title,sub_desc) VALUES ('{body['title']}','{body['description']}')"
+    mysql_handler.mysql_execute(query, fetch_result=False)
+    mysql_handler.commit()
+    if mysql_handler.mysql_cursor().rowcount < 1:
+        data["status"] = "failed to add subject"
+        return responseHandler.responseBody(status_code='3011', data=data)
+    data["status"] = "Subject added"
+    return responseHandler.responseBody(status_code='2011', data=data)
+
+@app.get("/subject")
+async def get_subject():
+    query = f"SELECT * FROM subject"
+    data = mysql_handler.mysql_execute(query, fetch_result=True)
+    if not data:
+        return responseHandler.responseBody(status_code='3012')
+    return responseHandler.responseBody(status_code='2012', data=data)
+#add level
+@app.post("/add/level")
+async def add_subject(request: Request):
+    data = {}
+    body = await request.json()
+    query = f"INSERT INTO level (level_title,level_desc,level_class) VALUES ('{body['title']}','{body['description']}','{body['class']}')"
+    print(query)
+    mysql_handler.mysql_execute(query, fetch_result=False)
+    mysql_handler.commit()
+    if mysql_handler.mysql_cursor().rowcount < 1:
+        data["status"] = "failed to add level"
+        return responseHandler.responseBody(status_code='3013', data=data)
+    data["status"] = "Level added"
+    return responseHandler.responseBody(status_code='2013', data=data)
+
+@app.get("/level")
+async def get_level():
+    query = f"SELECT * FROM level"
+    data = mysql_handler.mysql_execute(query, fetch_result=True)
+    if not data:
+        return responseHandler.responseBody(status_code='3014')
+    return responseHandler.responseBody(status_code='2014', data=data)
