@@ -85,7 +85,7 @@ async def get_questions_from_category(cat_id: str):
 # get all questions of a given quiz
 @app.get("/question/quiz/{quiz_id}")
 async def get_questions_from_quiz_id(quiz_id: str):
-    query = f"SELECT q_id,content,opt1,opt2,opt3,opt4 FROM mcqs where q_id = {quiz_id};"
+    query = f"SELECT q_id,ques_id,content,opt1,opt2,opt3,opt4 FROM mcqs where q_id = {quiz_id};"
     data = mysql_handler.mysql_execute(query, fetch_result=True)
     if not data:
         return responseHandler.responseBody(status_code='3007')
@@ -134,7 +134,7 @@ async def add_quiz(request: Request):
     data = {}
     body = await request.json()
     query = f"INSERT INTO quiz (title,description,max_marks,no_of_ques,active,cat_id) VALUES ('{body['title']}','{body['description']}'," \
-            f"'{body['maxMarks']}','{body['numberOfQuestions']}','{body['active']}','{body['cat_id']}')"
+            f"'{body['maxMarks']}','{body['numberOfQuestions']}',{body['active']},'{body['cat_id']}')"
     print(query)
     mysql_handler.mysql_execute(query, fetch_result=False)
     mysql_handler.commit()
