@@ -24,6 +24,14 @@ class returnResponse:
                 body["message"] = "Quiz added"
             if status_code == "2010":
                 body["message"] = "Question added"
+            if status_code == "2011":
+                body["message"] = "Subject added"
+            if status_code == "2012":
+                body["message"] = "Subject fetched"
+            if status_code == "2013":
+                body["message"] = "Level added"
+            if status_code == "2014":
+                body["message"] = "Level fetched"
 
 
         else:
@@ -48,6 +56,14 @@ class returnResponse:
                 body["message"] = "Quiz not added"
             if status_code == "3010":
                 body["message"] = "Question not added"
+            if status_code == "3011":
+                body["message"] = "Subject not added"
+            if status_code == "3012":
+                body["message"] = "Subject not fetched"
+            if status_code == "3013":
+                body["message"] = "Level not added"
+            if status_code == "3014":
+                body["message"] = "Level not fetched"
 
         return body
 
