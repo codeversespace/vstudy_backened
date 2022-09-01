@@ -275,7 +275,12 @@ async def submit_answer(request: Request):
 async def get_evaluated_answer_sheet(request: Request):
     body = await request.json()
     quiz_id = body['q_id']
-    student_id = body['student_id']
+    student_id = body['stu_id']
+    #check if any quiz for given stu_id present in answer_db
+    if not mysql_handler.if_exist('ans_sheet',['student_id','q_id'],[student_id,quiz_id]):
+        data = {''}
+        return responseHandler.responseBody(status_code='3017', msg = f'No record found for the pair [student_id:{student_id} - quiz_id:{quiz_id}',data=data)
+
     # first fecth submitted answer from db
     # then fetch the question data from db
     query = f"SELECT ques_id, content,opt1,opt2,opt3,opt4,ans FROM mcqs where q_id = {quiz_id};"
@@ -309,7 +314,7 @@ async def get_evaluated_answer_sheet(request: Request):
             if ques_no >= len(answer_list):
                 break
         final_response = {}
-        final_response['student_id'] = student_id
+        final_response['stu_id'] = student_id
         final_response['quiz_id'] = quiz_id
         final_response['total_question'] = total_question
         final_response['no_of_correct_answers'] = correct_answer
