@@ -51,5 +51,4 @@ class mysql_obj:
 
     def if_exist(self, table: str, column: str, value: str):
         q = f"select 1 from {table} WHERE {column} = '{value}' limit 1"
-        print(q)
         return self.mysql_execute(q, False)

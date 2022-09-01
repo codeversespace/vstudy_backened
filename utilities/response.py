@@ -2,7 +2,7 @@ class returnResponse:
     def __generate_response_msg_from_code(self, status_code: str):
         body = {}
         body["code"] = status_code
-        if status_code.startswith("200"):
+        if status_code.startswith("2"):
             body["status"] = "success"
             if status_code == "2001":
                 body["message"] = "Login successful"
@@ -32,6 +32,10 @@ class returnResponse:
                 body["message"] = "Level added"
             if status_code == "2014":
                 body["message"] = "Level fetched"
+            if status_code == "2015":
+                body["message"] = "Answer sheet submitted"
+            if status_code == "2016":
+                body["message"] = "Questions found for the qiven quiz/answer-sheet"
 
 
         else:
@@ -64,6 +68,10 @@ class returnResponse:
                 body["message"] = "Level not added"
             if status_code == "3014":
                 body["message"] = "Level not fetched"
+            if status_code == "3015":
+                body["message"] = "Answer sheet not submitted"
+            if status_code == "3016":
+                body["message"] = "No questions can be found for the qiven quiz/answer-sheet"
 
         return body
 

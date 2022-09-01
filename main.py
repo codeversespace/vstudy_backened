@@ -1,3 +1,5 @@
+import json
+
 from fastapi import FastAPI
 from fastapi import Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -34,6 +36,7 @@ async def generate_token(request: Request):
         return responseHandler.responseBody(status_code='3001', msg="Invalid Credentials")
     return responseHandler.responseBody(status_code='2001', data=data)
     # return payload
+
 
 @app.get("/category")
 async def get_categories():
@@ -91,6 +94,7 @@ async def get_questions_from_quiz_id(quiz_id: str):
         return responseHandler.responseBody(status_code='3007')
     return responseHandler.responseBody(status_code='2007', data=data)
 
+
 @app.get("/question/quiz/all/{quiz_id}")
 async def get_questions_from_quiz_id(quiz_id: str):
     query = f"SELECT * FROM mcqs where q_id = {quiz_id};"
@@ -144,6 +148,7 @@ async def add_quiz(request: Request):
     data["status"] = "Quiz added"
     return responseHandler.responseBody(status_code='2008', data=data)
 
+
 @app.post("/add/question")
 async def add_quiz(request: Request):
     data = {}
@@ -160,10 +165,11 @@ async def add_quiz(request: Request):
     data["status"] = "question added"
     return responseHandler.responseBody(status_code='2008', data=data)
 
-#get questions from quiz id
+
+# get questions from quiz id
 
 
-#add subject
+# add subject
 @app.post("/add/subject")
 async def add_subject(request: Request):
     data = {}
@@ -177,6 +183,7 @@ async def add_subject(request: Request):
     data["status"] = "Subject added"
     return responseHandler.responseBody(status_code='2011', data=data)
 
+
 @app.get("/subject")
 async def get_subject():
     query = f"SELECT * FROM subject"
@@ -184,7 +191,9 @@ async def get_subject():
     if not data:
         return responseHandler.responseBody(status_code='3012')
     return responseHandler.responseBody(status_code='2012', data=data)
-#add level
+
+
+# add level
 @app.post("/add/level")
 async def add_subject(request: Request):
     data = {}
@@ -199,6 +208,7 @@ async def add_subject(request: Request):
     data["status"] = "Level added"
     return responseHandler.responseBody(status_code='2013', data=data)
 
+
 @app.get("/level")
 async def get_level():
     query = f"SELECT * FROM level"
@@ -206,3 +216,74 @@ async def get_level():
     if not data:
         return responseHandler.responseBody(status_code='3014')
     return responseHandler.responseBody(status_code='2014', data=data)
+
+
+#
+@app.post("/add/submit_ans")
+async def submit_answer(request: Request):
+    data = {}
+    body = await request.json()
+    ans_data = json.dumps(body['data'])
+    query = f"INSERT INTO ans_sheet VALUES ({body['stu_id']},{body['q_id']},'{ans_data}')"
+    print(query)
+    mysql_handler.mysql_execute(query, fetch_result=False)
+    mysql_handler.commit()
+    if mysql_handler.mysql_cursor().rowcount < 1:
+        data["status"] = "failed to submit answer keys"
+        return responseHandler.responseBody(status_code='3015', data=data)
+    data["status"] = "Answer sheet submitted"
+    return responseHandler.responseBody(status_code='2015', data=data)
+
+
+# show checked answer sheet
+#
+@app.post("/get/answer-sheet")
+async def get_evaluated_answer_sheet(request: Request):
+    body = await request.json()
+    quiz_id = body['q_id']
+    student_id = body['student_id']
+    # first fecth submitted answer from db
+    # then fetch the question data from db
+    query = f"SELECT ques_id, content,opt1,opt2,opt3,opt4,ans FROM mcqs where q_id = {quiz_id};"
+    questions_data = mysql_handler.mysql_execute(query, fetch_result=True)
+
+    # mysql_handler.close()
+    if questions_data:
+        # question found
+        query_ans = f"SELECT ans_keys from ans_sheet WHERE student_id = {student_id} AND q_id = {quiz_id}"
+        answer_data = mysql_handler.mysql_execute(query_ans, fetch_result=True)
+        answer_list = json.loads(answer_data[0]['ans_keys'])
+        correct_answer = 0
+        print(questions_data)
+        total_question = len(questions_data)
+        # return answer_list, question_data
+        total_attempted = total_question
+        for ques_no in range(total_question):
+            # check if not attempted
+            if str(questions_data[ques_no]['ques_id']) not in answer_list:
+                questions_data[ques_no]['result'] = 'un_attempted'
+                total_attempted -= 1
+            else:
+                selected_answer = answer_list[str(questions_data[ques_no]['ques_id'])].lower()
+                if questions_data[ques_no]['ans'].lower() == selected_answer:
+                    # correct answer
+                    correct_answer += 1
+                    questions_data[ques_no]['result'] = 'right'
+                else:
+                    questions_data[ques_no]['result'] = 'wrong'
+                    questions_data[ques_no]['selected_answer'] = selected_answer
+            if ques_no >= len(answer_list):
+                break
+        final_response = {}
+        final_response['student_id'] = student_id
+        final_response['quiz_id'] = quiz_id
+        final_response['total_question'] = total_question
+        final_response['no_of_correct_answers'] = correct_answer
+        final_response['total_attempted'] = total_attempted
+        final_response['answer_data'] = questions_data
+        return final_response
+
+
+
+    else:
+        return responseHandler.responseBody(status_code='3016', data=questions_data)
