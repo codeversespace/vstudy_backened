@@ -49,6 +49,18 @@ class mysql_obj:
             json_data.append(dict(zip(row_headers, result)))
         return json_data
 
-    def if_exist(self, table: str, column: str, value: str):
-        q = f"select 1 from {table} WHERE {column} = '{value}' limit 1"
+    def if_exist(self, table: str, column: list = [], value: list = []):
+        add = ''
+        subquery = ''
+        if len(column)>1:
+            for i in range(len(column)):
+                if i == 1:
+                    add = 'AND'
+                subquery = f'{subquery} {add} {column[i]} = {value[i]}'
+            q = f"select 1 from {table} WHERE {subquery}"
+            print(q)
+        else:
+            q = f"select 1 from {table} WHERE {column[0]} = '{value[0]}' limit 1"
+
+
         return self.mysql_execute(q, False)
