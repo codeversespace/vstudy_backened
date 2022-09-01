@@ -72,6 +72,8 @@ class returnResponse:
                 body["message"] = "Answer sheet not submitted"
             if status_code == "3016":
                 body["message"] = "No questions can be found for the qiven quiz/answer-sheet"
+            if status_code == "3017":
+                body["message"] = "Student_id<->Quiz_id Record not found"
 
         return body
 
