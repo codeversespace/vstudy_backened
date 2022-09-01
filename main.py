@@ -278,7 +278,7 @@ async def get_evaluated_answer_sheet(request: Request):
     student_id = body['stu_id']
     #check if any quiz for given stu_id present in answer_db
     if not mysql_handler.if_exist('ans_sheet',['student_id','q_id'],[student_id,quiz_id]):
-        data = {''}
+        data = {'status':'failure'}
         return responseHandler.responseBody(status_code='3017', msg = f'No record found for the pair [student_id:{student_id} - quiz_id:{quiz_id}',data=data)
 
     # first fecth submitted answer from db
