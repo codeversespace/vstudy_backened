@@ -53,11 +53,12 @@ def export_db():
         data += "\n\n"
 
     # now = datetime.datetime.now()
-    filename ="backup_vsd_dev.sql"
+    filename = "backup_vsd_dev.sql"
 
     FILE = open(filename, "w+")
     FILE.writelines(data)
     FILE.close()
+
 
 @app.post("/generate-token")
 async def generate_token(request: Request):
@@ -79,6 +80,9 @@ async def get_categories():
     if not data:
         return responseHandler.responseBody(status_code='3002')
     return responseHandler.responseBody(status_code='2002', data=data)
+
+
+get_categories()
 
 
 @app.get("/quiz")
@@ -188,9 +192,8 @@ async def add_quiz(request: Request):
     data = {}
     body = await request.json()
     # will get added by value from UI
-    query = f"INSERT INTO mcqs (q_id,content,opt1,opt2,opt3,opt4,ans,added_by) VALUES ('{body['q_id']}','{body['content']}'," \
-            f"'{body['option1']}','{body['option2']}','{body['option3']}','{body['option4']}','{body['answer']}','{body['added_by']}')"
-    print(query)
+    query = f"INSERT INTO mcqs (q_id,content,opt1,opt2,opt3,opt4,ans,added_by,sub_id,class) VALUES ('{body['q_id']}','{body['content']}'," \
+            f"'{body['option1']}','{body['option2']}','{body['option3']}','{body['option4']}','{body['answer']}','{body['added_by']}',{body['sub_id']},{body['class']})"
     mysql_handler.mysql_execute(query, fetch_result=False)
     mysql_handler.commit()
     if mysql_handler.mysql_cursor().rowcount < 1:
@@ -269,6 +272,28 @@ async def submit_answer(request: Request):
     return responseHandler.responseBody(status_code='2015', data=data)
 
 
+# {reg_id: "5249962"}
+
+
+@app.post("/user/is-exist")
+async def check_if_user_exist(request: Request):
+    body = await request.json()
+    registration_id = body['reg_id']
+    return mysql_handler.if_exist('users',['regId'],[registration_id])
+
+
+# register a user
+@app.post("/user")
+async def register_user(request: Request):
+    body = await request.json()
+    quiz_id = body['q_id']
+    student_id = body['stu_id']
+
+
+{"regId": "123", "name": "Syed Abdullah", "class": 1, "school": "09890", "email": "sayedabdullah11@gmail.com",
+ "phone": 919199191, "password": "123"}
+
+
 # show checked answer sheet
 #
 @app.post("/get/answer-sheet")
@@ -276,10 +301,12 @@ async def get_evaluated_answer_sheet(request: Request):
     body = await request.json()
     quiz_id = body['q_id']
     student_id = body['stu_id']
-    #check if any quiz for given stu_id present in answer_db
-    if not mysql_handler.if_exist('ans_sheet',['student_id','q_id'],[student_id,quiz_id]):
+    # check if any quiz for given stu_id present in answer_db
+    if not mysql_handler.if_exist('ans_sheet', ['student_id', 'q_id'], [student_id, quiz_id]):
         data = {''}
-        return responseHandler.responseBody(status_code='3017', msg = f'No record found for the pair [student_id:{student_id} - quiz_id:{quiz_id}',data=data)
+        return responseHandler.responseBody(status_code='3017',
+                                            msg=f'No record found for the pair [student_id:{student_id} - quiz_id:{quiz_id}',
+                                            data=data)
 
     # first fecth submitted answer from db
     # then fetch the question data from db
@@ -321,8 +348,5 @@ async def get_evaluated_answer_sheet(request: Request):
         final_response['total_attempted'] = total_attempted
         final_response['answer_data'] = questions_data
         return final_response
-
-
-
     else:
         return responseHandler.responseBody(status_code='3016', data=questions_data)
