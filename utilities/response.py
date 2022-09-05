@@ -36,6 +36,10 @@ class returnResponse:
                 body["message"] = "Answer sheet submitted"
             if status_code == "2016":
                 body["message"] = "Questions found for the qiven quiz/answer-sheet"
+            if status_code == "2017":
+                body["message"] = "Student_id<->Quiz_id Record found"
+            if status_code == "2018":
+                body["message"] = "Student registration done"
 
 
         else:
@@ -74,11 +78,14 @@ class returnResponse:
                 body["message"] = "No questions can be found for the qiven quiz/answer-sheet"
             if status_code == "3017":
                 body["message"] = "Student_id<->Quiz_id Record not found"
+            if status_code == "3018":
+                body["message"] = "Student registration failed"
 
         return body
 
-    def responseBody(self, status_code: str, msg: str = None, data: dict = {}):
+    def responseBody(self, status_code: str, msg: str = None, data: dict = {}, jwt: str = None):
         body = self.__generate_response_msg_from_code(status_code)
+        body["authentication_token"] = jwt
         body["reason"] = msg
         body["data"] = data
         return body

@@ -1,18 +1,85 @@
 import json
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends, File, UploadFile, Body
 from fastapi import Request
 from fastapi.middleware.cors import CORSMiddleware
 from utilities import mysql_conn
-from fastapi.encoders import jsonable_encoder
 import re
-import os
 from utilities.response import returnResponse
+from fastapi.security import OAuth2PasswordBearer
+import xlrd
 
+
+from app.model import PostSchema, UserSchema, UserLoginSchema
+from app.auth.auth_bearer import JWTBearer
+from app.auth.auth_handler import signJWT
+
+app = FastAPI()
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 responseHandler = returnResponse()
 mysql_handler = mysql_conn.mysql_obj()
 
-app = FastAPI()
+@app.get("/items/")
+async def read_items(token: str = Depends(oauth2_scheme)):
+    return {"token": token}
+
+
+# @app.post("/user/upload")
+# async def create_file(file: bytes = File()):
+#     return {"file_size": len(file)}
+
+def excel_to_db(excel_path, table: str, columns: list = []):
+    #read excel
+    excel_sheet =xlrd.open_workbook(excel_path)
+    sheet_name = excel_sheet.sheet_names()
+    for sh in range(0,len(sheet_name)):
+        sheet = excel_sheet.sheet_by_index(sh)
+        row_values = ''
+        for r in range(1,sheet.nrows):
+            row_value = ''
+            for i in range(len(columns)):
+                row_value = row_value + f'{sheet.cell(r,i).value},'
+            row_value = f"({row_value.rstrip(',')})"
+            row_values = row_values + ','+row_value
+        final_value_set = (row_values.lstrip(','))
+    cols =''
+    a = final_value_set.replace('(',"('")
+    b = a.replace(',',"','")
+    c = b.replace(")','(",'),(')
+    d = c.replace(")","')")
+    e = d.replace('.0','')
+    for i in range(len(columns)):
+        if i > 0 :
+            act_col = ',' + columns[i]
+        else :
+            act_col = columns[i]
+        cols = cols + act_col
+    query = f"INSERT INTO {table} ({cols}) VALUES {e}"
+    # print(query)
+    mysql_handler.mysql_execute(query, fetch_result=False)
+    mysql_handler.commit()
+
+
+
+
+@app.post("/user/upload")
+async def create_upload_file(file: UploadFile):
+    try:
+        contents = file.file.read()
+        with open(f'assets/registration-data/{file.filename}', 'wb') as f:
+            f.write(contents)
+    except Exception:
+        return {"message": "There was an error uploading the file"}
+    finally:
+        file.file.close()
+        excel_to_db(f'assets/registration-data/{file.filename}', 'users', ['regId', 'name','class','school','email','phone','password','role'])
+
+    return {"message": f"Successfully uploaded {file.filename}"}
+
+
+
+
 origins = ["http://localhost:4200"]
 app.add_middleware(
     CORSMiddleware,
@@ -59,21 +126,24 @@ def export_db():
     FILE.writelines(data)
     FILE.close()
 
-
-@app.post("/generate-token")
+@app.post("/generate-token", tags=['Generate Token'])
 async def generate_token(request: Request):
+    # return token
     body = await request.json()
+
     reg_id = int(re.search(r'\d+', body['regId']).group())
     password = body['password']
     query = f"SELECT * from users WHERE regId  = '{reg_id}' AND password = '{password}'"
     data = mysql_handler.mysql_execute(query, fetch_result=True)
+    jwt_token = signJWT(reg_id)
+    print(jwt_token)
     if not data:
         return responseHandler.responseBody(status_code='3001', msg="Invalid Credentials")
-    return responseHandler.responseBody(status_code='2001', data=data)
+    return responseHandler.responseBody(status_code='2001', data=data, jwt  = jwt_token)
     # return payload
 
 
-@app.get("/category")
+@app.get("/category", dependencies=[Depends(JWTBearer())])
 async def get_categories():
     query = f"SELECT * from categories"
     data = mysql_handler.mysql_execute(query, fetch_result=True)
@@ -82,7 +152,6 @@ async def get_categories():
     return responseHandler.responseBody(status_code='2002', data=data)
 
 
-get_categories()
 
 
 @app.get("/quiz")
@@ -175,8 +244,8 @@ async def add_category(request: Request):
 async def add_quiz(request: Request):
     data = {}
     body = await request.json()
-    query = f"INSERT INTO quiz (title,description,max_marks,no_of_ques,active,cat_id) VALUES ('{body['title']}','{body['description']}'," \
-            f"'{body['maxMarks']}','{body['numberOfQuestions']}',{body['active']},'{body['cat_id']}')"
+    query = f"INSERT INTO quiz (title,description,max_marks,no_of_ques,active,cat_id,level_id) VALUES ('{body['title']}','{body['description']}'," \
+            f"'{body['maxMarks']}','{body['numberOfQuestions']}',{body['active']},'{body['cat_id']}','{body['level_id']}')"
     print(query)
     mysql_handler.mysql_execute(query, fetch_result=False)
     mysql_handler.commit()
@@ -279,19 +348,25 @@ async def submit_answer(request: Request):
 async def check_if_user_exist(request: Request):
     body = await request.json()
     registration_id = body['reg_id']
-    return mysql_handler.if_exist('users',['regId'],[registration_id])
+    return mysql_handler.if_exist('users', ['regId'], [registration_id])
 
 
 # register a user
 @app.post("/user")
 async def register_user(request: Request):
+    data = {}
     body = await request.json()
-    quiz_id = body['q_id']
-    student_id = body['stu_id']
-
-
-{"regId": "123", "name": "Syed Abdullah", "class": 1, "school": "09890", "email": "sayedabdullah11@gmail.com",
- "phone": 919199191, "password": "123"}
+    query = f"INSERT INTO users (regId,name,class,school,email,phone,password,role) " \
+            f"VALUES ({body['regId']},'{body['name']}',{body['class']},{body['school']},'{body['email']}',{body['phone']},'{body['password']}','student')"
+    # {"regId": "123", "name": "Syed Abdullah", "class": 1, "school": "09890", "email": "sayedabdullah11@gmail.com",
+    #  "phone": 919199191, "password": "123"}
+    mysql_handler.mysql_execute(query, fetch_result=False)
+    mysql_handler.commit()
+    if mysql_handler.mysql_cursor().rowcount < 1:
+        data["status"] = "failed to submit answer keys"
+        return responseHandler.responseBody(status_code='3015', data=data)
+    data["status"] = "Answer sheet submitted"
+    return responseHandler.responseBody(status_code='2015', data=data)
 
 
 # show checked answer sheet
@@ -320,7 +395,6 @@ async def get_evaluated_answer_sheet(request: Request):
         answer_data = mysql_handler.mysql_execute(query_ans, fetch_result=True)
         answer_list = json.loads(answer_data[0]['ans_keys'])
         correct_answer = 0
-        print(questions_data)
         total_question = len(questions_data)
         # return answer_list, question_data
         total_attempted = total_question
