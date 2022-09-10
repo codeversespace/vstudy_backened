@@ -18,7 +18,7 @@ app = FastAPI()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 responseHandler = returnResponse()
-mysql_handler = mysql_conn.mysql_obj()
+
 
 @app.get("/items/")
 async def read_items(token: str = Depends(oauth2_scheme)):
@@ -57,8 +57,9 @@ def excel_to_db(excel_path, table: str, columns: list = []):
         cols = cols + act_col
     query = f"INSERT INTO {table} ({cols}) VALUES {e}"
     # print(query)
-    mysql_handler.mysql_execute(query, fetch_result=False)
-    mysql_handler.commit()
+    mysql_conn.mysql_obj().mysql_execute(query, fetch_result=False)
+    mysql_conn.mysql_obj().commit()
+    mysql_conn.mysql_obj().close()
 
 
 
@@ -80,7 +81,7 @@ async def create_upload_file(file: UploadFile):
 
 
 
-origins = ["http://localhost:4200"]
+origins = ["http://localhost"]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -92,7 +93,8 @@ app.add_middleware(
 
 # export db
 def export_db():
-    cur = mysql_handler.mysql_cursor()
+    
+    cur = mysql_conn.mysql_obj().mysql_cursor()
 
     cur.execute("SHOW TABLES")
     data = ""
@@ -120,12 +122,11 @@ def export_db():
         data += "\n\n"
 
     # now = datetime.datetime.now()
-    filename = "backup_vsd_dev.sql"
+    filename = "vstudy_dev.sql"
 
     FILE = open(filename, "w+")
     FILE.writelines(data)
     FILE.close()
-
 @app.post("/generate-token", tags=['Generate Token'])
 async def generate_token(request: Request):
     # return token
@@ -134,7 +135,9 @@ async def generate_token(request: Request):
     reg_id = int(re.search(r'\d+', body['regId']).group())
     password = body['password']
     query = f"SELECT * from users WHERE regId  = '{reg_id}' AND password = '{password}'"
-    data = mysql_handler.mysql_execute(query, fetch_result=True)
+    data = mysql_conn.mysql_obj().mysql_execute(query, fetch_result=True)
+    mysql_conn.mysql_obj().close()
+
     jwt_token = signJWT(reg_id)
     print(jwt_token)
     if not data:
@@ -146,7 +149,7 @@ async def generate_token(request: Request):
 @app.get("/category", dependencies=[Depends(JWTBearer())])
 async def get_categories():
     query = f"SELECT * from categories"
-    data = mysql_handler.mysql_execute(query, fetch_result=True)
+    data = mysql_conn.mysql_obj().mysql_execute(query, fetch_result=True)
     if not data:
         return responseHandler.responseBody(status_code='3002')
     return responseHandler.responseBody(status_code='2002', data=data)
@@ -157,7 +160,7 @@ async def get_categories():
 @app.get("/quiz")
 async def get_categories():
     query = f"SELECT * FROM quiz INNER JOIN categories ON categories.cat_id=quiz.cat_id"
-    data = mysql_handler.mysql_execute(query, fetch_result=True)
+    data = mysql_conn.mysql_obj().mysql_execute(query, fetch_result=True)
     if not data:
         return responseHandler.responseBody(status_code='3003')
     return responseHandler.responseBody(status_code='2003', data=data)
@@ -166,7 +169,7 @@ async def get_categories():
 @app.get("/quiz/active")
 async def get_categories():
     query = f"SELECT * FROM quiz INNER JOIN categories ON categories.cat_id=quiz.cat_id WHERE quiz.active=1"
-    data = mysql_handler.mysql_execute(query, fetch_result=True)
+    data = mysql_conn.mysql_obj().mysql_execute(query, fetch_result=True)
     if not data:
         return responseHandler.responseBody(status_code='3004')
     return responseHandler.responseBody(status_code='2004', data=data)
@@ -176,7 +179,7 @@ async def get_categories():
 @app.get("/quiz/category/active/{cat_id}")
 async def get_category(cat_id: str):
     query = f"SELECT * FROM quiz INNER JOIN categories ON categories.cat_id=quiz.cat_id WHERE quiz.active=1 AND quiz.cat_id={cat_id}"
-    data = mysql_handler.mysql_execute(query, fetch_result=True)
+    data = mysql_conn.mysql_obj().mysql_execute(query, fetch_result=True)
     if not data:
         return responseHandler.responseBody(status_code='3005')
     return responseHandler.responseBody(status_code='2005', data=data)
@@ -186,7 +189,7 @@ async def get_category(cat_id: str):
 @app.get("/category/questions/{cat_id}")
 async def get_questions_from_category(cat_id: str):
     query = f"SELECT * FROM mcqs INNER JOIN quiz ON quiz.q_id = mcqs.q_id where quiz.cat_id = {cat_id};"
-    data = mysql_handler.mysql_execute(query, fetch_result=True)
+    data = mysql_conn.mysql_obj().mysql_execute(query, fetch_result=True)
     if not data:
         return responseHandler.responseBody(status_code='3006')
     return responseHandler.responseBody(status_code='2006', data=data)
@@ -196,7 +199,7 @@ async def get_questions_from_category(cat_id: str):
 @app.get("/question/quiz/{quiz_id}")
 async def get_questions_from_quiz_id(quiz_id: str):
     query = f"SELECT q_id,ques_id,content,opt1,opt2,opt3,opt4 FROM mcqs where q_id = {quiz_id};"
-    data = mysql_handler.mysql_execute(query, fetch_result=True)
+    data = mysql_conn.mysql_obj().mysql_execute(query, fetch_result=True)
     if not data:
         return responseHandler.responseBody(status_code='3007')
     return responseHandler.responseBody(status_code='2007', data=data)
@@ -205,7 +208,7 @@ async def get_questions_from_quiz_id(quiz_id: str):
 @app.get("/question/quiz/all/{quiz_id}")
 async def get_questions_from_quiz_id(quiz_id: str):
     query = f"SELECT * FROM mcqs where q_id = {quiz_id};"
-    data = mysql_handler.mysql_execute(query, fetch_result=True)
+    data = mysql_conn.mysql_obj().mysql_execute(query, fetch_result=True)
     if not data:
         return responseHandler.responseBody(status_code='3007')
     return responseHandler.responseBody(status_code='2007', data=data)
@@ -214,7 +217,7 @@ async def get_questions_from_quiz_id(quiz_id: str):
 @app.get("/quiz/{id}")
 async def get_quiz_detail(id: str):
     query = f"SELECT * FROM quiz WHERE q_id = {id}"
-    data = mysql_handler.mysql_execute(query, fetch_result=True)
+    data = mysql_conn.mysql_obj().mysql_execute(query, fetch_result=True)
     if not data:
         return responseHandler.responseBody(status_code='3003')
     return responseHandler.responseBody(status_code='2003', data=data)
@@ -228,9 +231,9 @@ async def add_category(request: Request):
     data = {}
     body = await request.json()
     query = f"INSERT INTO categories (cat_title,cat_desc) VALUES ('{body['title']}','{body['description']}')"
-    mysql_handler.mysql_execute(query, fetch_result=False)
-    mysql_handler.commit()
-    if mysql_handler.mysql_cursor().rowcount < 1:
+    mysql_conn.mysql_obj().mysql_execute(query, fetch_result=False)
+    mysql_conn.mysql_obj().commit()
+    if mysql_conn.mysql_obj().mysql_cursor().rowcount < 1:
         data["status"] = "failed to insert"
         return responseHandler.responseBody(status_code='3008', data=data)
     data["status"] = "Category added"
@@ -247,9 +250,9 @@ async def add_quiz(request: Request):
     query = f"INSERT INTO quiz (title,description,max_marks,no_of_ques,active,cat_id,level_id) VALUES ('{body['title']}','{body['description']}'," \
             f"'{body['maxMarks']}','{body['numberOfQuestions']}',{body['active']},'{body['cat_id']}','{body['level_id']}')"
     print(query)
-    mysql_handler.mysql_execute(query, fetch_result=False)
-    mysql_handler.commit()
-    if mysql_handler.mysql_cursor().rowcount < 1:
+    mysql_conn.mysql_obj().mysql_execute(query, fetch_result=False)
+    mysql_conn.mysql_obj().commit()
+    if mysql_conn.mysql_obj().mysql_cursor().rowcount < 1:
         data["status"] = "failed to insert quiz"
         return responseHandler.responseBody(status_code='3008', data=data)
     data["status"] = "Quiz added"
@@ -263,9 +266,9 @@ async def add_quiz(request: Request):
     # will get added by value from UI
     query = f"INSERT INTO mcqs (q_id,content,opt1,opt2,opt3,opt4,ans,added_by,sub_id,class) VALUES ('{body['q_id']}','{body['content']}'," \
             f"'{body['option1']}','{body['option2']}','{body['option3']}','{body['option4']}','{body['answer']}','{body['added_by']}',{body['sub_id']},{body['class']})"
-    mysql_handler.mysql_execute(query, fetch_result=False)
-    mysql_handler.commit()
-    if mysql_handler.mysql_cursor().rowcount < 1:
+    mysql_conn.mysql_obj().mysql_execute(query, fetch_result=False)
+    mysql_conn.mysql_obj().commit()
+    if mysql_conn.mysql_obj().mysql_cursor().rowcount < 1:
         data["status"] = "failed to add question"
         return responseHandler.responseBody(status_code='3008', data=data)
     data["status"] = "question added"
@@ -281,9 +284,9 @@ async def add_subject(request: Request):
     data = {}
     body = await request.json()
     query = f"INSERT INTO subject (sub_title,sub_desc) VALUES ('{body['title']}','{body['description']}')"
-    mysql_handler.mysql_execute(query, fetch_result=False)
-    mysql_handler.commit()
-    if mysql_handler.mysql_cursor().rowcount < 1:
+    mysql_conn.mysql_obj().mysql_execute(query, fetch_result=False)
+    mysql_conn.mysql_obj().commit()
+    if mysql_conn.mysql_obj().mysql_cursor().rowcount < 1:
         data["status"] = "failed to add subject"
         return responseHandler.responseBody(status_code='3011', data=data)
     data["status"] = "Subject added"
@@ -293,7 +296,7 @@ async def add_subject(request: Request):
 @app.get("/subject")
 async def get_subject():
     query = f"SELECT * FROM subject"
-    data = mysql_handler.mysql_execute(query, fetch_result=True)
+    data = mysql_conn.mysql_obj().mysql_execute(query, fetch_result=True)
     if not data:
         return responseHandler.responseBody(status_code='3012')
     return responseHandler.responseBody(status_code='2012', data=data)
@@ -306,9 +309,9 @@ async def add_subject(request: Request):
     body = await request.json()
     query = f"INSERT INTO level (level_title,level_desc,level_class) VALUES ('{body['title']}','{body['description']}','{body['class']}')"
     print(query)
-    mysql_handler.mysql_execute(query, fetch_result=False)
-    mysql_handler.commit()
-    if mysql_handler.mysql_cursor().rowcount < 1:
+    mysql_conn.mysql_obj().mysql_execute(query, fetch_result=False)
+    mysql_conn.mysql_obj().commit()
+    if mysql_conn.mysql_obj().mysql_cursor().rowcount < 1:
         data["status"] = "failed to add level"
         return responseHandler.responseBody(status_code='3013', data=data)
     data["status"] = "Level added"
@@ -318,7 +321,7 @@ async def add_subject(request: Request):
 @app.get("/level")
 async def get_level():
     query = f"SELECT * FROM level"
-    data = mysql_handler.mysql_execute(query, fetch_result=True)
+    data = mysql_conn.mysql_obj().mysql_execute(query, fetch_result=True)
     if not data:
         return responseHandler.responseBody(status_code='3014')
     return responseHandler.responseBody(status_code='2014', data=data)
@@ -332,9 +335,9 @@ async def submit_answer(request: Request):
     ans_data = json.dumps(body['data'])
     query = f"INSERT INTO ans_sheet VALUES ({body['stu_id']},{body['q_id']},'{ans_data}')"
     print(query)
-    mysql_handler.mysql_execute(query, fetch_result=False)
-    mysql_handler.commit()
-    if mysql_handler.mysql_cursor().rowcount < 1:
+    mysql_conn.mysql_obj().mysql_execute(query, fetch_result=False)
+    mysql_conn.mysql_obj().commit()
+    if mysql_conn.mysql_obj().mysql_cursor().rowcount < 1:
         data["status"] = "failed to submit answer keys"
         return responseHandler.responseBody(status_code='3015', data=data)
     data["status"] = "Answer sheet submitted"
@@ -348,7 +351,7 @@ async def submit_answer(request: Request):
 async def check_if_user_exist(request: Request):
     body = await request.json()
     registration_id = body['reg_id']
-    return mysql_handler.if_exist('users', ['regId'], [registration_id])
+    return mysql_conn.mysql_obj().if_exist('users', ['regId'], [registration_id])
 
 
 # register a user
@@ -360,9 +363,9 @@ async def register_user(request: Request):
             f"VALUES ({body['regId']},'{body['name']}',{body['class']},{body['school']},'{body['email']}',{body['phone']},'{body['password']}','student')"
     # {"regId": "123", "name": "Syed Abdullah", "class": 1, "school": "09890", "email": "sayedabdullah11@gmail.com",
     #  "phone": 919199191, "password": "123"}
-    mysql_handler.mysql_execute(query, fetch_result=False)
-    mysql_handler.commit()
-    if mysql_handler.mysql_cursor().rowcount < 1:
+    mysql_conn.mysql_obj().mysql_execute(query, fetch_result=False)
+    mysql_conn.mysql_obj().commit()
+    if mysql_conn.mysql_obj().mysql_cursor().rowcount < 1:
         data["status"] = "failed to submit answer keys"
         return responseHandler.responseBody(status_code='3015', data=data)
     data["status"] = "Answer sheet submitted"
@@ -377,7 +380,7 @@ async def get_evaluated_answer_sheet(request: Request):
     quiz_id = body['q_id']
     student_id = body['stu_id']
     # check if any quiz for given stu_id present in answer_db
-    if not mysql_handler.if_exist('ans_sheet', ['student_id', 'q_id'], [student_id, quiz_id]):
+    if not mysql_conn.mysql_obj().if_exist('ans_sheet', ['student_id', 'q_id'], [student_id, quiz_id]):
         data = {''}
         return responseHandler.responseBody(status_code='3017',
                                             msg=f'No record found for the pair [student_id:{student_id} - quiz_id:{quiz_id}',
@@ -386,13 +389,13 @@ async def get_evaluated_answer_sheet(request: Request):
     # first fecth submitted answer from db
     # then fetch the question data from db
     query = f"SELECT ques_id, content,opt1,opt2,opt3,opt4,ans FROM mcqs where q_id = {quiz_id};"
-    questions_data = mysql_handler.mysql_execute(query, fetch_result=True)
+    questions_data = mysql_conn.mysql_obj().mysql_execute(query, fetch_result=True)
 
-    # mysql_handler.close()
+    # mysql_conn.mysql_obj().close()
     if questions_data:
         # question found
         query_ans = f"SELECT ans_keys from ans_sheet WHERE student_id = {student_id} AND q_id = {quiz_id}"
-        answer_data = mysql_handler.mysql_execute(query_ans, fetch_result=True)
+        answer_data = mysql_conn.mysql_obj().mysql_execute(query_ans, fetch_result=True)
         answer_list = json.loads(answer_data[0]['ans_keys'])
         correct_answer = 0
         total_question = len(questions_data)
