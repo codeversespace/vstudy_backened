@@ -1,7 +1,7 @@
 class SQL_DB:
     MYSQL_HOST = 'localhost'
 
-    MYSQL_PASSWORD = 'Vstudy@admin@0003'
+    MYSQL_PASSWORD = 'root'
 
     MYSQL_DB = 'vstudy_dev'
 

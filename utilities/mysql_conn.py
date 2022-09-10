@@ -58,7 +58,6 @@ class mysql_obj:
                     add = 'AND'
                 subquery = f'{subquery} {add} {column[i]} = {value[i]}'
             q = f"select 1 from {table} WHERE {subquery}"
-            print(q)
         else:
             q = f"select 1 from {table} WHERE {column[0]} = '{value[0]}' limit 1"
 

@@ -1,6 +1,6 @@
 import json
 
-from fastapi import FastAPI, Depends, File, UploadFile, Body
+from fastapi import FastAPI, Depends, UploadFile
 from fastapi import Request
 from fastapi.middleware.cors import CORSMiddleware
 from utilities import mysql_conn
@@ -8,9 +8,6 @@ import re
 from utilities.response import returnResponse
 from fastapi.security import OAuth2PasswordBearer
 import xlrd
-
-
-from app.model import PostSchema, UserSchema, UserLoginSchema
 from app.auth.auth_bearer import JWTBearer
 from app.auth.auth_handler import signJWT
 
@@ -91,6 +88,12 @@ app.add_middleware(
 )
 
 
+@app.on_event("startup")
+async def startup():
+    # if not mysql_conn.mysql_obj().mysql_cursor():
+    print('Checking app health')
+
+
 # export db
 def export_db():
     
@@ -139,7 +142,6 @@ async def generate_token(request: Request):
     mysql_conn.mysql_obj().close()
 
     jwt_token = signJWT(reg_id)
-    print(jwt_token)
     if not data:
         return responseHandler.responseBody(status_code='3001', msg="Invalid Credentials")
     return responseHandler.responseBody(status_code='2001', data=data, jwt  = jwt_token)
