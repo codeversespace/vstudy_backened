@@ -1,4 +1,5 @@
 import json
+import time
 
 from fastapi import FastAPI, Depends, UploadFile
 from fastapi import Request
@@ -6,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from utilities import mysql_conn
 import re
 from utilities.response import returnResponse
+
 from fastapi.security import OAuth2PasswordBearer
 import xlrd
 from app.auth.auth_bearer import JWTBearer
@@ -335,7 +337,7 @@ async def submit_answer(request: Request):
     data = {}
     body = await request.json()
     ans_data = json.dumps(body['data'])
-    query = f"INSERT INTO ans_sheet VALUES ({body['stu_id']},{body['q_id']},'{ans_data}')"
+    query = f"UPDATE ans_sheet SET ans_keys = '{ans_data}' WHERE student_id = {body['stu_id']} AND q_id = {body['q_id']}"
     print(query)
     mysql_conn.mysql_obj().mysql_execute(query, fetch_result=False)
     mysql_conn.mysql_obj().commit()
@@ -429,3 +431,25 @@ async def get_evaluated_answer_sheet(request: Request):
         return final_response
     else:
         return responseHandler.responseBody(status_code='3016', data=questions_data)
+
+
+
+@app.post("/ans/get-quiz-start-time")
+async def get_quiz_start_time_and(request: Request):
+    data = {}
+    body = await request.json()
+    q_id = body['q_id']
+    stu_id = body['stu_id']
+    m_conn = mysql_conn.mysql_obj()
+    query = f"SELECT quiz.time_per_qstn_ms, ans_sheet.started_at FROM quiz RIGHT JOIN ans_sheet ON quiz.q_id=ans_sheet.q_id WHERE ans_sheet.student_id = {stu_id} AND ans_sheet.q_id ={q_id}"
+    data = m_conn.mysql_execute(query, fetch_result=True)
+    if not data:
+        # insert quiz startup data
+        curr_time_ms = int(time.time() * 1000.0)
+        query = f"INSERT INTO ans_sheet (student_id,q_id,started_at) VALUES ({stu_id},{q_id},{curr_time_ms})"
+        m_conn.mysql_execute(query, fetch_result=False)
+        m_conn.commit()
+        query = f"SELECT quiz.time_per_qstn_ms, ans_sheet.started_at FROM quiz RIGHT JOIN ans_sheet ON quiz.q_id=ans_sheet.q_id WHERE ans_sheet.student_id = {stu_id} AND ans_sheet.q_id ={q_id}"
+        data = m_conn.mysql_execute(query, fetch_result=True)
+    return responseHandler.responseBody(status_code='2003', data=data)
+
