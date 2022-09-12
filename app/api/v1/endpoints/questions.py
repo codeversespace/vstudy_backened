@@ -11,7 +11,9 @@ responseHandler = returnResponse()
 @router.get("/category/questions/{cat_id}")
 async def get_questions_from_category(cat_id: str):
     query = f"SELECT * FROM mcqs INNER JOIN quiz ON quiz.q_id = mcqs.q_id where quiz.cat_id = {cat_id};"
-    data = mysql_conn.mysql_obj().mysql_execute(query, fetch_result=True)
+    m_conn = mysql_conn.mysql_obj()
+    data = m_conn.mysql_execute(query, fetch_result=True)
+    m_conn.close()
     if not data:
         return responseHandler.responseBody(status_code='3006')
     return responseHandler.responseBody(status_code='2006', data=data)
