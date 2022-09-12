@@ -29,29 +29,29 @@ async def read_items(token: str = Depends(oauth2_scheme)):
 #     return {"file_size": len(file)}
 
 def excel_to_db(excel_path, table: str, columns: list = []):
-    #read excel
-    excel_sheet =xlrd.open_workbook(excel_path)
+    # read excel
+    excel_sheet = xlrd.open_workbook(excel_path)
     sheet_name = excel_sheet.sheet_names()
-    for sh in range(0,len(sheet_name)):
+    for sh in range(0, len(sheet_name)):
         sheet = excel_sheet.sheet_by_index(sh)
         row_values = ''
-        for r in range(1,sheet.nrows):
+        for r in range(1, sheet.nrows):
             row_value = ''
             for i in range(len(columns)):
-                row_value = row_value + f'{sheet.cell(r,i).value},'
+                row_value = row_value + f'{sheet.cell(r, i).value},'
             row_value = f"({row_value.rstrip(',')})"
-            row_values = row_values + ','+row_value
+            row_values = row_values + ',' + row_value
         final_value_set = (row_values.lstrip(','))
-    cols =''
-    a = final_value_set.replace('(',"('")
-    b = a.replace(',',"','")
-    c = b.replace(")','(",'),(')
-    d = c.replace(")","')")
-    e = d.replace('.0','')
+    cols = ''
+    a = final_value_set.replace('(', "('")
+    b = a.replace(',', "','")
+    c = b.replace(")','(", '),(')
+    d = c.replace(")", "')")
+    e = d.replace('.0', '')
     for i in range(len(columns)):
-        if i > 0 :
+        if i > 0:
             act_col = ',' + columns[i]
-        else :
+        else:
             act_col = columns[i]
         cols = cols + act_col
     query = f"INSERT INTO {table} ({cols}) VALUES {e}"
@@ -59,8 +59,6 @@ def excel_to_db(excel_path, table: str, columns: list = []):
     mysql_conn.mysql_obj().mysql_execute(query, fetch_result=False)
     mysql_conn.mysql_obj().commit()
     mysql_conn.mysql_obj().close()
-
-
 
 
 @app.post("/user/upload")
@@ -73,11 +71,10 @@ async def create_upload_file(file: UploadFile):
         return {"message": "There was an error uploading the file"}
     finally:
         file.file.close()
-        excel_to_db(f'assets/registration-data/{file.filename}', 'users', ['regId', 'name','class','school','email','phone','password','role'])
+        excel_to_db(f'assets/registration-data/{file.filename}', 'users',
+                    ['regId', 'name', 'class', 'school', 'email', 'phone', 'password', 'role'])
 
     return {"message": f"Successfully uploaded {file.filename}"}
-
-
 
 
 origins = ["http://localhost"]
@@ -98,7 +95,6 @@ async def startup():
 
 # export db
 def export_db():
-    
     cur = mysql_conn.mysql_obj().mysql_cursor()
 
     cur.execute("SHOW TABLES")
@@ -132,6 +128,8 @@ def export_db():
     FILE = open(filename, "w+")
     FILE.writelines(data)
     FILE.close()
+
+
 @app.post("/generate-token", tags=['Generate Token'])
 async def generate_token(request: Request):
     # return token
@@ -146,7 +144,7 @@ async def generate_token(request: Request):
     jwt_token = signJWT(reg_id)
     if not data:
         return responseHandler.responseBody(status_code='3001', msg="Invalid Credentials")
-    return responseHandler.responseBody(status_code='2001', data=data, jwt  = jwt_token)
+    return responseHandler.responseBody(status_code='2001', data=data, jwt=jwt_token)
     # return payload
 
 
@@ -157,8 +155,6 @@ async def get_categories():
     if not data:
         return responseHandler.responseBody(status_code='3002')
     return responseHandler.responseBody(status_code='2002', data=data)
-
-
 
 
 @app.get("/quiz")
@@ -332,16 +328,17 @@ async def get_level():
 
 
 #
-@app.post("/add/submit_ans")
-async def submit_answer(request: Request):
+@app.post("/add/submit_ans-1")
+async def submit_answer_1(request: Request):
     data = {}
     body = await request.json()
     ans_data = json.dumps(body['data'])
     query = f"UPDATE ans_sheet SET ans_keys = '{ans_data}' WHERE student_id = {body['stu_id']} AND q_id = {body['q_id']}"
     print(query)
-    mysql_conn.mysql_obj().mysql_execute(query, fetch_result=False)
-    mysql_conn.mysql_obj().commit()
-    if mysql_conn.mysql_obj().mysql_cursor().rowcount < 1:
+    m = mysql_conn.mysql_obj()
+    m.mysql_execute(query, fetch_result=False)
+    m.commit()
+    if m.mysql_cursor().rowcount < 1:
         data["status"] = "failed to submit answer keys"
         return responseHandler.responseBody(status_code='3015', data=data)
     data["status"] = "Answer sheet submitted"
@@ -433,10 +430,8 @@ async def get_evaluated_answer_sheet(request: Request):
         return responseHandler.responseBody(status_code='3016', data=questions_data)
 
 
-
 @app.post("/ans/get-quiz-start-time")
 async def get_quiz_start_time_and(request: Request):
-    data = {}
     body = await request.json()
     q_id = body['q_id']
     stu_id = body['stu_id']
@@ -451,5 +446,102 @@ async def get_quiz_start_time_and(request: Request):
         m_conn.commit()
         query = f"SELECT quiz.time_per_qstn_ms, ans_sheet.started_at FROM quiz RIGHT JOIN ans_sheet ON quiz.q_id=ans_sheet.q_id WHERE ans_sheet.student_id = {stu_id} AND ans_sheet.q_id ={q_id}"
         data = m_conn.mysql_execute(query, fetch_result=True)
+    m_conn.close()
     return responseHandler.responseBody(status_code='2003', data=data)
 
+
+# {"stu_id":"124","q_id":"1","data":{"1":"opt1","2":"opt2"}}
+@app.post("/add/submit_ans")
+async def submit_answer(request: Request):
+    data = {}
+    m_conn = mysql_conn.mysql_obj()
+    body = await request.json()
+    ans_data = json.dumps(body['data'])
+    student_id = body['stu_id']
+    quiz_id = body['q_id']
+    question_attempted, marks_obtained, answer_data = __evaluate_answer_sheet(m_conn, quiz_id, student_id, ans_data)
+    print(question_attempted)
+    query = f"UPDATE ans_sheet SET ans_keys = '{answer_data}', marks_obtained = {marks_obtained} WHERE student_id = {student_id} AND q_id = {quiz_id}"
+    m_conn.mysql_execute(query, fetch_result=False)
+    m_conn.commit()
+    if m_conn.mysql_cursor().rowcount < 1:
+        data["status"] = "failed to submit answer keys"
+        m_conn.close()
+        return responseHandler.responseBody(status_code='3015', data=data)
+    data["status"] = "Answer sheet submitted"
+    m_conn.close()
+    return responseHandler.responseBody(status_code='2015', data=data)
+
+
+# show checked answer sheet
+#
+# @router.post("/get/answer-sheet")
+# async def get_evaluated_answer_sheet(request: Request):
+#     body = await request.json()
+#     quiz_id = body['q_id']
+#     student_id = body['stu_id']
+#     m_conn = mysql_conn.mysql_obj()
+#     if not m_conn.if_exist('ans_sheet', ['student_id', 'q_id'], [student_id, quiz_id]):
+#         data = {''}
+#         return responseHandler.responseBody(status_code='3017',
+#                                             msg=f'No record found for the pair [student_id:{student_id} - quiz_id:{quiz_id}',
+#                                             data=data)
+#     return __evaluate_answer_sheet(m_conn, quiz_id, student_id)
+
+
+def __evaluate_answer_sheet(m_conn, quiz_id: str = None, student_id: str = None, answer_data: dict = {}):
+    query = f"SELECT ques_id, content,opt1,opt2,opt3,opt4,ans FROM mcqs where q_id = {quiz_id};"
+    questions_data = m_conn.mysql_execute(query, fetch_result=True)
+
+    # mysql_conn.mysql_obj().close()
+    if questions_data:
+        # question found
+        no_of_correct_answer = 0
+        total_question = len(questions_data)
+        # return answer_list, question_data
+        answer_data = json.loads(answer_data)
+        question_attempted = len(answer_data)
+        for ques_no in range(total_question):
+            # check if not attempted
+            ques_id = str(questions_data[ques_no]['ques_id'])
+            correct_option = questions_data[ques_no]['ans'].lower()
+            if ques_no >= len(answer_data):
+                break
+            answer_data[ques_id].append(correct_option)
+            if ques_id not in answer_data:
+                answer_data[str(ques_no)].append('')
+            else:
+                selected_answer = answer_data[ques_id][0].lower()
+                if correct_option == selected_answer:
+                    no_of_correct_answer += 1
+
+        return question_attempted, no_of_correct_answer, json.dumps(answer_data)
+    else:
+        return responseHandler.responseBody(status_code='3016', data=questions_data)
+
+
+def fetch_submitted_answer_sheet(student_id: str = None, quiz_id: str = None):
+    m_conn = mysql_conn.mysql_obj()
+    query = f"SELECT quiz.q_id, quiz.title,quiz.max_marks,quiz.no_of_ques, ans_sheet.ans_keys, ans_sheet.marks_obtained FROM quiz INNER JOIN " \
+            f"ans_sheet ON quiz.q_id=ans_sheet.q_id where ans_sheet.q_id={quiz_id} AND ans_sheet.student_id={student_id};"
+    quiz = m_conn.mysql_execute(query, fetch_result=True)
+    q = f"SELECT ques_id, content,opt1,opt2,opt3,opt4 from mcqs WHERE q_id = {quiz_id}"
+    questions_data = m_conn.mysql_execute(q, fetch_result=True)
+    m_conn.close()
+    a_k = quiz[0]['ans_keys']
+    marks_obtained = quiz[0]['marks_obtained']
+    ans_keys = json.loads(a_k)
+    final_response = {}
+    for i in range(len(questions_data)):
+        selected_option = ans_keys[str(questions_data[i]['ques_id'])][0]
+        correct_option = ans_keys[str(questions_data[i]['ques_id'])][1]
+        questions_data[i]['selected_option'] = selected_option
+        questions_data[i]['correct_option'] = correct_option
+    final_response['stu_id'] = student_id
+    final_response['quiz_id'] = quiz_id
+    final_response['total_question'] = quiz[0]['no_of_ques']
+    final_response['marks_obtained'] = marks_obtained
+    # final_response['no_of_correct_answers'] = no_of_correct_answer  # marks_obtained
+    # final_response['total_attempted'] = question_attempted
+    final_response['answer_data'] = questions_data
+    return responseHandler.responseBody(status_code='2016', data=final_response)
