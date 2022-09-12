@@ -26,7 +26,8 @@ CREATE TABLE `ans_sheet` (
   `student_id` int DEFAULT NULL,
   `q_id` int DEFAULT NULL,
   `ans_keys` json DEFAULT NULL,
-  `started_at` varchar(255) DEFAULT NULL
+  `started_at` varchar(255) DEFAULT NULL,
+  `marks_obtained` int DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -36,7 +37,7 @@ CREATE TABLE `ans_sheet` (
 
 LOCK TABLES `ans_sheet` WRITE;
 /*!40000 ALTER TABLE `ans_sheet` DISABLE KEYS */;
-INSERT INTO `ans_sheet` VALUES (1213,1,'{\"1\": \"opt2\", \"2\": \"opt1\"}','1662814107223'),(1213,2,'{\"3\": \"opt1\"}',NULL),(1213,1,'{\"1\": \"opt2\", \"2\": \"opt1\"}','1662814107223'),(1213,2,'{\"3\": \"opt1\"}',NULL),(1213,1,'{\"1\": \"opt2\", \"2\": \"opt3\"}','1662814107223'),(1213,1,'{\"1\": \"opt2\", \"2\": \"opt3\"}','1662814107223'),(1213,7,'{\"8\": \"opt1\"}',NULL),(1213,7,'{\"8\": \"opt1\"}',NULL),(5249960,1,NULL,'1662815723695.3792'),(4343323,1,NULL,'1662816315282'),(666,1,NULL,'1662816453392'),(1211,1,'{\"1\": \"opt1\", \"2\": \"opt1\"}','1662816687117'),(1226,1,'{}','1662817451808'),(1226,2,NULL,'1662818308847'),(123,9,'{}','1662819369765'),(124,9,'{\"11\": \"opt1\"}','1662819675745');
+INSERT INTO `ans_sheet` VALUES (1213,1,'{\"1\": \"opt2\", \"2\": \"opt1\"}','1662814107223',NULL),(1213,2,'{\"3\": \"opt1\"}',NULL,NULL),(1213,1,'{\"1\": \"opt2\", \"2\": \"opt1\"}','1662814107223',NULL),(1213,2,'{\"3\": \"opt1\"}',NULL,NULL),(1213,1,'{\"1\": \"opt2\", \"2\": \"opt3\"}','1662814107223',NULL),(1213,1,'{\"1\": \"opt2\", \"2\": \"opt3\"}','1662814107223',NULL),(1213,7,'{\"8\": \"opt1\"}',NULL,NULL),(1213,7,'{\"8\": \"opt1\"}',NULL,NULL),(5249960,1,NULL,'1662815723695.3792',NULL),(4343323,1,NULL,'1662816315282',NULL),(666,1,NULL,'1662816453392',NULL),(1211,1,'{\"1\": \"opt1\", \"2\": \"opt1\"}','1662816687117',NULL),(1226,1,'{}','1662817451808',NULL),(1226,2,NULL,'1662818308847',NULL),(123,1,'{}','1662819369765',5),(124,1,'{\"111\": \"2\"}','1662965582401',3),(124,6,NULL,'1662967425734',NULL),(124,9,'{\"11\": [\"opt1\", \"opt1\"], \"12\": [\"opt1\", \"opt2\"]}','1662984550214',1);
 /*!40000 ALTER TABLE `ans_sheet` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -223,4 +224,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2022-09-10 19:57:45
+-- Dump completed on 2022-09-12 19:11:04

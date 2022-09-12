@@ -20,7 +20,7 @@ async def get_categories():
 
 
 @router.get("/quiz/active/{stu_id}")
-async def get_categories(stu_id:str):
+async def get_categories(stu_id:str =None):
     m_conn =  mysql_conn.mysql_obj()
     query = f"SELECT * FROM quiz INNER JOIN categories ON categories.cat_id=quiz.cat_id WHERE quiz.active=1"
     data = m_conn.mysql_execute(query, fetch_result=True)
