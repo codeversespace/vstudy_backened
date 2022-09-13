@@ -109,6 +109,6 @@ async def fetch_submitted_answer_sheet(request: Request):
 @router.get("/result/get-ranking/{q_id}")
 async def get_quiz_start_time_and(q_id:str):
     m_conn = mysql_conn.mysql_obj()
-    query = f'select student_id, marks_obtained from ans_sheet where marks_obtained is not null and q_id ={q_id} order by marks_obtained desc;'
+    query = f'select users.regId, ans_sheet.marks_obtained ,users.name from ans_sheet inner join users ON users.regId = ans_sheet.student_id where ans_sheet.marks_obtained is not null and q_id ={q_id} order by marks_obtained desc;'
     data = m_conn.mysql_execute(query, fetch_result=True)
     return responseHandler.responseBody(status_code='2003', data=data)
