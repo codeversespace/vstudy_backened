@@ -1,18 +1,15 @@
 import json
 
+from app.auth.auth_bearer import JWTBearer
 from utilities import mysql_conn
-from fastapi import Request, APIRouter
+from fastapi import Request, APIRouter, Depends
 
 from utilities.response import returnResponse
 
 router = APIRouter()
 responseHandler = returnResponse()
 
-
-
-
-# {"stu_id":"124","q_id":"1","data":{"1":"opt1","2":"opt2"}}
-@router.post("/add/submit_ans")
+@router.post("/add/submit_ans",dependencies=[Depends(JWTBearer())])
 async def submit_answer(request: Request):
     data = {}
     m_conn = mysql_conn.mysql_obj()
@@ -27,23 +24,6 @@ async def submit_answer(request: Request):
     data["status"] = "Answer sheet submitted"
     m_conn.close()
     return responseHandler.responseBody(status_code='2015', data=data)
-
-
-# show checked answer sheet
-#
-# @router.post("/get/answer-sheet")
-# async def get_evaluated_answer_sheet(request: Request):
-#     body = await request.json()
-#     quiz_id = body['q_id']
-#     student_id = body['stu_id']
-#     m_conn = mysql_conn.mysql_obj()
-#     if not m_conn.if_exist('ans_sheet', ['student_id', 'q_id'], [student_id, quiz_id]):
-#         data = {''}
-#         return responseHandler.responseBody(status_code='3017',
-#                                             msg=f'No record found for the pair [student_id:{student_id} - quiz_id:{quiz_id}',
-#                                             data=data)
-#     return __evaluate_answer_sheet(m_conn, quiz_id, student_id)
-
 
 def __evaluate_answer_sheet(m_conn, quiz_id: str = None, student_id: str = None, answer_data: dict = {}):
     query = f"SELECT ques_id, content,opt1,opt2,opt3,opt4,ans FROM mcqs where q_id = {quiz_id};"
@@ -75,7 +55,7 @@ def __evaluate_answer_sheet(m_conn, quiz_id: str = None, student_id: str = None,
     else:
         return responseHandler.responseBody(status_code='3016', data=questions_data)
 
-@router.post("/get/answer-sheet")
+@router.post("/get/answer-sheet",dependencies=[Depends(JWTBearer())])
 async def fetch_submitted_answer_sheet(request: Request):
     body = await request.json()
     quiz_id = body['q_id']
@@ -100,8 +80,6 @@ async def fetch_submitted_answer_sheet(request: Request):
     final_response['quiz_id'] = quiz_id
     final_response['total_question'] = quiz[0]['no_of_ques']
     final_response['marks_obtained'] = marks_obtained
-    # final_response['no_of_correct_answers'] = no_of_correct_answer  # marks_obtained
-    # final_response['total_attempted'] = question_attempted
     final_response['answer_data'] = questions_data
     return responseHandler.responseBody(status_code='2016', data=final_response)
 

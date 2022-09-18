@@ -5,7 +5,7 @@ from starlette.middleware.cors import CORSMiddleware
 from app.api.v1.api import api_router
 
 
-origins = ["http://localhost"]
+origins = ["http://localhost:4200"]
 
 
 app = FastAPI(title='Version1 Vstudy backend', openapi_url="/api/v1/openapi.json")

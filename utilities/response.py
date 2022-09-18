@@ -44,6 +44,8 @@ class returnResponse:
 
         else:
             body["status"] = "failure"
+            if status_code == "3999":
+                body["message"] = "Unable to process your request, un-authorised access."
             if status_code == "3001":
                 body["message"] = "Login failed"
             if status_code == "3002":
@@ -87,5 +89,6 @@ class returnResponse:
         body = self.__generate_response_msg_from_code(status_code)
         body["authentication_token"] = jwt
         body["reason"] = msg
+        # if len(data) > 1:
         body["data"] = data
         return body

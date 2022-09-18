@@ -1,6 +1,9 @@
 # add level
+from app.api.v1.validator import  if_request_valid
+from app.auth.auth_bearer import JWTBearer
+from app.auth.auth_handler import decodeJWT
 from utilities import mysql_conn
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Depends,Header
 
 from utilities.response import returnResponse
 
@@ -8,8 +11,10 @@ router = APIRouter()
 responseHandler = returnResponse()
 
 
-@router.post("/add/level")
-async def add_subject(request: Request):
+@router.post("/add/level",dependencies=[Depends(JWTBearer())])
+async def add_subject(request: Request, Authorization=Header(default=None)):
+    if not if_request_valid('super', decodeJWT(Authorization.replace('Bearer ', ''))['user_id']):
+        return responseHandler.responseBody(status_code='3999')
     data = {}
     body = await request.json()
     query = f"INSERT INTO level (level_title,level_desc,level_class) VALUES ('{body['title']}','{body['description']}','{body['class']}')"
@@ -21,7 +26,7 @@ async def add_subject(request: Request):
     return responseHandler.responseBody(status_code='2013', data=data)
 
 
-@router.get("/level")
+@router.get("/level",dependencies=[Depends(JWTBearer())])
 async def get_level():
     m_conn = mysql_conn.mysql_obj()
     query = f"SELECT * FROM level"

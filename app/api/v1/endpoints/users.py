@@ -1,13 +1,20 @@
 import re
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Depends
 
+from app.auth.auth_bearer import JWTBearer
 from app.auth.auth_handler import signJWT
 from utilities.response import returnResponse
 from utilities import mysql_conn
 
 router = APIRouter()
 responseHandler = returnResponse()
+
+@router.get("/settings/checkIfSecureLoginEnabled", tags=['Check if secure'])
+async def check_if_secure_login_enabled():
+    return True
+
+
 
 @router.post("/generate-token", tags=['Generate Token'])
 async def generate_token(request: Request):
@@ -18,9 +25,7 @@ async def generate_token(request: Request):
     password = body['password']
     query = f"SELECT * from users WHERE regId  = '{reg_id}' AND password = '{password}'"
     data = m_conn.mysql_execute(query, fetch_result=True)
-    print(data)
     m_conn.close()
-
     jwt_token = signJWT(reg_id)
     if not data:
         return responseHandler.responseBody(status_code='3001', msg="Invalid Credentials")
