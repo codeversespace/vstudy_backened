@@ -1,8 +1,10 @@
 import json
 
+from app.api.v1.validator import if_request_valid
 from app.auth.auth_bearer import JWTBearer
+from app.auth.auth_handler import decodeJWT
 from utilities import mysql_conn
-from fastapi import Request, APIRouter, Depends
+from fastapi import Request, APIRouter, Depends,Header
 
 from utilities.response import returnResponse
 
@@ -10,7 +12,7 @@ router = APIRouter()
 responseHandler = returnResponse()
 
 @router.post("/add/submit_ans",dependencies=[Depends(JWTBearer())])
-async def submit_answer(request: Request):
+async def submit_answer(request: Request, Authorization=Header(default=None)):
     data = {}
     m_conn = mysql_conn.mysql_obj()
     body = await request.json()
@@ -18,7 +20,14 @@ async def submit_answer(request: Request):
     student_id = body['stu_id']
     quiz_id = body['q_id']
     question_attempted, marks_obtained, answer_data = __evaluate_answer_sheet(m_conn, quiz_id, student_id, ans_data)
-    query = f"UPDATE ans_sheet SET ans_keys = '{answer_data}', marks_obtained = {marks_obtained} WHERE student_id = {student_id} AND q_id = {quiz_id}"
+
+    if not if_request_valid('super', decodeJWT(Authorization.replace('Bearer ', ''))['user_id']):
+        # if non admin
+        query = f"UPDATE ans_sheet SET ans_keys = '{answer_data}', marks_obtained = {marks_obtained} WHERE student_id = {student_id} AND q_id = {quiz_id}"
+    else :
+        query = f"INSERT INTO ans_sheet (student_id,q_id,ans_keys,marks_obtained) VALUES ({student_id},{quiz_id} ,'{answer_data}',{marks_obtained})"
+
+
     m_conn.mysql_execute(query, fetch_result=False)
     m_conn.commit()
     data["status"] = "Answer sheet submitted"

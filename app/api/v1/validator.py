@@ -6,3 +6,4 @@ def if_request_valid(role_level,user_id):
     if role_level.lower() == 'super':
         if str(user_id) not in RoleAuthenticator.SuperRole.role_list:
             return False
+        return True

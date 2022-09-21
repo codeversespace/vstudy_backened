@@ -87,7 +87,8 @@ class returnResponse:
 
     def responseBody(self, status_code: str, msg: str = None, data: dict = {}, jwt: str = None):
         body = self.__generate_response_msg_from_code(status_code)
-        body["authentication_token"] = jwt
+        if jwt is not None:
+            body["authentication_token"] = jwt
         body["reason"] = msg
         # if len(data) > 1:
         body["data"] = data
