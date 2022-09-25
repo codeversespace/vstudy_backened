@@ -1,11 +1,10 @@
 import re
 
-from fastapi import APIRouter, Request, Depends
+from fastapi import APIRouter, Request
 
-from app.auth.auth_bearer import JWTBearer
 from app.auth.auth_handler import signJWT
-from utilities.response import returnResponse
-from utilities import mysql_conn
+from app.utilities.response import returnResponse
+from app.utilities import mysql_conn
 
 router = APIRouter()
 responseHandler = returnResponse()

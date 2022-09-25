@@ -1,4 +1,4 @@
-from utilities.response import returnResponse
+from app.utilities.response import returnResponse
 from configurations.role_definer import RoleAuthenticator
 responseHandler = returnResponse()
 

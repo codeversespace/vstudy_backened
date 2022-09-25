@@ -3,10 +3,10 @@ import json
 from app.api.v1.validator import if_request_valid
 from app.auth.auth_bearer import JWTBearer
 from app.auth.auth_handler import decodeJWT
-from utilities import mysql_conn
+from app.utilities import mysql_conn
 from fastapi import Request, APIRouter, Depends,Header
 
-from utilities.response import returnResponse
+from app.utilities.response import returnResponse
 
 router = APIRouter()
 responseHandler = returnResponse()
@@ -44,6 +44,7 @@ def __evaluate_answer_sheet(m_conn, quiz_id: str = None, student_id: str = None,
         no_of_correct_answer = 0
         total_question = len(questions_data)
         # return answer_list, question_data
+        {3: ["opt1"]}
         answer_data = json.loads(answer_data)
         question_attempted = len(answer_data)
         for ques_no in range(total_question):
@@ -52,10 +53,11 @@ def __evaluate_answer_sheet(m_conn, quiz_id: str = None, student_id: str = None,
             correct_option = questions_data[ques_no]['ans'].lower()
             if ques_no >= len(answer_data):
                 break
-            answer_data[ques_id].append(correct_option)
+
             if ques_id not in answer_data:
-                answer_data[str(ques_no)].append('')
+                answer_data[ques_id].append('')
             else:
+                answer_data[ques_id].append(correct_option)
                 selected_answer = answer_data[ques_id][0].lower()
                 if correct_option == selected_answer:
                     no_of_correct_answer += 1
@@ -77,9 +79,11 @@ async def fetch_submitted_answer_sheet(request: Request):
     questions_data = m_conn.mysql_execute(q, fetch_result=True)
     m_conn.close()
     a_k = quiz[0]['ans_keys']
+    print(a_k)
     marks_obtained = quiz[0]['marks_obtained']
     ans_keys = json.loads(a_k)
     final_response = {}
+    print(questions_data)
     for i in range(len(questions_data)):
         selected_option = ans_keys[str(questions_data[i]['ques_id'])][0]
         correct_option = ans_keys[str(questions_data[i]['ques_id'])][1]

@@ -1,4 +1,4 @@
-from utilities.strings import NeStrings
+from app.utilities.strings import NeStrings
 
 
 class FileSize:

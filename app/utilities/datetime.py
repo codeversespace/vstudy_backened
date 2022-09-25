@@ -1,5 +1,4 @@
 import calendar
-import datetime
 import re
 import time
 
@@ -20,21 +19,21 @@ class NeDateTime:
 
     @staticmethod
     def nowIso():
-        return datetime.datetime.now().isoformat()
+        return app.utilities.datetime.now().isoformat()
 
     @staticmethod
     def yyyymmddhhmmss():
-        return datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+        return app.utilities.datetime.now().strftime("%Y%m%d%H%M%S")
 
     @staticmethod
     def now_in_seconds():
         # input datetime
-        dt = datetime.datetime.now()
+        dt = app.utilities.datetime.now()
         return calendar.timegm(dt.timetuple())
 
     @staticmethod
     def yyyymmddhhmmss_int():
-        return int(datetime.datetime.now().strftime("%Y%m%d%H%M%S"))
+        return int(app.utilities.datetime.now().strftime("%Y%m%d%H%M%S"))
 
     @staticmethod
     def removeMilliseconds(datetimeval):

@@ -1,6 +1,6 @@
 from fastapi import FastAPI, UploadFile, APIRouter
 
-from utilities.excel_handler import excel_to_db
+from app.utilities.excel_handler import excel_to_db
 
 router_contacts = APIRouter(
     prefix="/action/bulk",

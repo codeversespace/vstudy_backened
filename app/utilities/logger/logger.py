@@ -5,9 +5,9 @@ import os
 import sys
 import time
 
-from utilities.datetime import NeDateTime
-from utilities.filesystem import fs
-from utilities.strings import NeStrings
+from app.utilities.datetime import NeDateTime
+from app.utilities.filesystem import fs
+from app.utilities.strings import NeStrings
 
 curr_environment = os.environ.get('ENVIRONMENT')
 if not curr_environment:

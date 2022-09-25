@@ -4,8 +4,8 @@ from fastapi import APIRouter, Request, Depends, Header
 from app.api.v1.validator import if_request_valid
 from app.auth.auth_bearer import JWTBearer
 from app.auth.auth_handler import decodeJWT
-from utilities import mysql_conn
-from utilities.response import returnResponse
+from app.utilities import mysql_conn
+from app.utilities.response import returnResponse
 
 router = APIRouter()
 responseHandler = returnResponse()
@@ -44,7 +44,7 @@ async def get_questions_from_quiz_id(quiz_id: str):
 
 
 @router.post("/add/question", dependencies=[Depends(JWTBearer())])
-async def add_quiz(request: Request, Authorization=Header(default=None)):
+async def add_question(request: Request, Authorization=Header(default=None)):
     if not if_request_valid('super', decodeJWT(Authorization.replace('Bearer ', ''))['user_id']):
         return responseHandler.responseBody(status_code='3999')
     data = {}
@@ -60,3 +60,4 @@ async def add_quiz(request: Request, Authorization=Header(default=None)):
         return responseHandler.responseBody(status_code='3008', data=data)
     data["status"] = "question added"
     return responseHandler.responseBody(status_code='2008', data=data)
+
