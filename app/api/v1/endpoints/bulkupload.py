@@ -14,9 +14,9 @@ responseHandler = returnResponse()
 
 @router.post("/upload", summary="Register students",
              description="Upload excel file with a fix format asked by admin. This endpoint will "
-                         "insert all the data in database in single query.\nNote: Please make sure you are entering valid data in each cells.",
+                         "insert all the data in database in single query./nNote: Please make sure you are entering valid data in each cells.",
              dependencies=[Depends(JWTBearer())])
-async def bulk_register_student(file: UploadFile, Authorization=Header(default=None)):
+async def bulk_register_student(file: UploadFile =File(...), Authorization=Header(default=None)):
     if not if_request_valid('super', decodeJWT(Authorization.replace('Bearer ', ''))['user_id']):
         return responseHandler.responseBody(status_code='3999')
     upload_file_path = __upload_excel_return_path(file)
@@ -32,10 +32,10 @@ def __upload_excel_return_path(file, parent_dir_if_any: str = None):
         parent_dir_if_any+='/'
     try:
         contents = file.file.read()
-        upload_file_path = f'../../../assets/uploaded-data/{parent_dir_if_any}{file.filename}'
+        
+        upload_file_path = f'D:/projects/vstudy_backened/app/assets/uploaded-data/{parent_dir_if_any}{file.filename}'
         with open(upload_file_path, 'wb') as f:
             f.write(contents)
-            print(contents)
     except Exception:
         return {"message": "There was an error uploading the file"}
     finally:
@@ -57,7 +57,7 @@ async def submit(file: UploadFile = File(...), class_st=Form(...), subject=Form(
 
 
 @router.post("/add/excel-questions")
-def add_questions_from_xl_to_db(file: UploadFile):
+def add_questions_from_xl_to_db(file: UploadFile = File(...)):
     excel_path = __upload_excel_return_path(file)
     add_questions_from_xl(excel_path)
     return True
