@@ -40,6 +40,8 @@ class returnResponse:
                 body["message"] = "Student_id<->Quiz_id Record found"
             if status_code == "2018":
                 body["message"] = "Student registration done"
+            if status_code == "2019":
+                body["message"] = "Question set added"
 
 
         else:
@@ -82,6 +84,8 @@ class returnResponse:
                 body["message"] = "Student_id<->Quiz_id Record not found"
             if status_code == "3018":
                 body["message"] = "Student registration failed"
+            if status_code == "3403":
+                body["message"] = "Session expired"
 
         return body
 
