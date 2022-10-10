@@ -67,18 +67,20 @@ def upload_ftp(server_addr, ftp_user, ftp_user_pass, dir_path,file,filename):
     from ftplib import FTP
     fileto = BytesIO()
     fileto.write(file)
+    fileto.seek(0)
     with FTP(server_addr, ftp_user, ftp_user_pass) as ftp:
         chdir(dir_path, ftp)
-        ftp.storlines(f'STOR {filename}', fileto)
+        ftp.storbinary(f'STOR {filename}', fileto)
 
 @router.post("/add/study-material")
 async def submit(file: UploadFile = File(...), class_st=Form(...), subject=Form(...), chapterName=Form(...)):
     dir_path = f'{class_st}/{subject}/'
     content = await file.read()
     file_name = file.filename
+    subject_code = getCode.subject(subject)
     upload_ftp('vstudy.in', 'vstudy-ftp', 'Vstudy@admin@123',dir_path,content, file_name)
     # add filepath data to db
-    query = f"INSERT INTO study_material (subject_code,class,file_path) VALUES (12,{class_st},'{file_name}')"
+    query = f"INSERT INTO study_material (subject_code,class,file_path,chapter_name) VALUES ({subject_code},{class_st},'{file_name}','{chapterName}')"
     m_conn = mysql_conn.mysql_obj()
     m_conn.mysql_execute(query, fetch_result=False)
     m_conn.commit()
