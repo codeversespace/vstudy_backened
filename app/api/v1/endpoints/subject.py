@@ -6,6 +6,7 @@ from app.auth.auth_bearer import JWTBearer
 from app.auth.auth_handler import decodeJWT
 from app.utilities import mysql_conn
 from app.utilities.response import returnResponse
+from app.utilities.vstd_utils import getCode
 
 router = APIRouter()
 responseHandler = returnResponse()
@@ -38,3 +39,31 @@ async def get_subject():
     if not data:
         return responseHandler.responseBody(status_code='3012')
     return responseHandler.responseBody(status_code='2012', data=data)
+
+
+@router.get("/study-material/get-subject-list/{_class}")
+async def get_subject(_class):
+    m_conn = mysql_conn.mysql_obj()
+    query = f"SELECT distinct subject_code FROM study_material WHERE class = {_class}"
+    data = m_conn.mysql_execute(query, fetch_result=True)
+    subjectList = []
+    for i in data:
+        subjectList.append(getCode.subjectById(i['subject_code']))
+    m_conn.close()
+    if not data:
+        return responseHandler.responseBody(status_code='3012')
+    return responseHandler.responseBody(status_code='2012', data=data)
+
+# get study-material path list inputs: subject and class
+@router.get("/study-material/get-chapter-list/{_class}/{subject}")
+async def get_chapter_list(_class,subject):
+    sub_code = getCode.subject(subject)
+    m_conn = mysql_conn.mysql_obj()
+    query = f"SELECT file_path, chapter_name FROM study_material WHERE class = {_class} and subject_code = {sub_code}"
+    data = m_conn.mysql_execute(query, fetch_result=True)
+    return_data = {}
+    for i in data:
+        file_path = f"{_class}/{subject}/{i['file_path']}"
+        return_data[i['chapter_name']] = file_path
+    m_conn.close()
+    return return_data
