@@ -50,9 +50,7 @@ async def get_subject(_class):
     for i in data:
         subjectList.append(getCode.subjectById(i['subject_code']))
     m_conn.close()
-    if not data:
-        return responseHandler.responseBody(status_code='3012')
-    return responseHandler.responseBody(status_code='2012', data=data)
+    return subjectList
 
 # get study-material path list inputs: subject and class
 @router.get("/study-material/get-chapter-list/{_class}/{subject}")
