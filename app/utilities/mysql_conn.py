@@ -1,11 +1,9 @@
 # pip install mysqlclient
 import MySQLdb
 from configurations.configs import Creds
-import json
 
 
 class mysql_obj:
-
     # , host: str = 'localhost', user: str = None, passwd: str = None, db: str = None, conv: bool = True
     def __init__(self):
         self.host = Creds.MYSQL_HOST
@@ -36,10 +34,15 @@ class mysql_obj:
     # if data not exists it will return 0
     def mysql_execute(self, query, fetch_result: bool = True):
         cursor = self.mysql_cursor()
-        if fetch_result:
-            cursor.execute(query)
-            return self.mysql_fetchall(cursor)
-        return cursor.execute(query)
+        try:
+            try:
+                return cursor.execute(query)
+            except (MySQLdb.Error, MySQLdb.Warning) as e:
+                return {'error': str(e)}
+            if fetch_result:
+                return self.mysql_fetchall(cursor)
+        finally:
+            self.conn.close()
 
     def mysql_fetchall(self, cursor):
         row_headers = [x[0] for x in cursor.description]  # this will extract row headers
@@ -60,6 +63,7 @@ class mysql_obj:
             q = f"select 1 from {table} WHERE {subquery}"
         else:
             q = f"select 1 from {table} WHERE {column[0]} = '{value[0]}' limit 1"
+            print(q)
 
 
         return self.mysql_execute(q, False)
