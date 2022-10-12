@@ -22,7 +22,7 @@ async def add_subject(request: Request, Authorization=Header(default=None)):
     m_conn = mysql_conn.mysql_obj()
     m_conn.mysql_execute(query, fetch_result=False)
     m_conn.commit()
-    m_conn.close()
+    
     # if mysql_conn.mysql_obj().mysql_cursor().rowcount < 1:
     #     data["status"] = "failed to add subject"
     #     return responseHandler.responseBody(status_code='3011', data=data)
@@ -35,7 +35,7 @@ async def get_subject():
     m_conn = mysql_conn.mysql_obj()
     query = f"SELECT * FROM subject"
     data = m_conn.mysql_execute(query, fetch_result=True)
-    m_conn.close()
+    
     if not data:
         return responseHandler.responseBody(status_code='3012')
     return responseHandler.responseBody(status_code='2012', data=data)
@@ -49,7 +49,7 @@ async def get_subject(_class):
     subjectList = []
     for i in data:
         subjectList.append(getCode.subjectById(i['subject_code']))
-    m_conn.close()
+    
     return subjectList
 
 # get study-material path list inputs: subject and class
@@ -63,5 +63,5 @@ async def get_chapter_list(_class,subject):
     for i in data:
         file_path = f"{_class}/{subject}/{i['file_path']}"
         return_data[i['chapter_name']] = file_path
-    m_conn.close()
+    
     return return_data

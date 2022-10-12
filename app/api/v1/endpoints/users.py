@@ -24,7 +24,7 @@ async def generate_token(request: Request):
     password = body['password']
     query = f"SELECT * from users WHERE regId  = '{reg_id}' AND password = '{password}'"
     data = m_conn.mysql_execute(query, fetch_result=True)
-    m_conn.close()
+    
     jwt_token = signJWT(reg_id)
     if not data:
         return responseHandler.responseBody(status_code='3001', msg="Invalid Credentials")
@@ -37,9 +37,9 @@ async def check_if_user_exist(reg_id):
     m_conn = mysql_conn.mysql_obj()
     query = f"SELECT * from users WHERE regId  = '{reg_id}'"
     data = m_conn.mysql_execute(query, fetch_result=True)
-    m_conn.close()
-    if not data:
-        return responseHandler.responseBody(status_code='3001', msg="Invalid Credentials")
+    
+    if 'error' in data:
+        return responseHandler.responseBody(status_code='3001', data=data, msg="Invalid Credentials" )
     return responseHandler.responseBody(status_code='2001', data=data)
 
 @router.post("/user/is-exist")
@@ -48,7 +48,7 @@ async def check_if_user_exist(request: Request):
     registration_id = body['reg_id']
     m_conn = mysql_conn.mysql_obj()
     data = m_conn.if_exist('users', ['regId'], [registration_id])
-    m_conn.close()
+    
     return data
 
 
@@ -64,7 +64,7 @@ async def register_user(request: Request):
     #  "phone": 919199191, "password": "123"}
     m_conn.mysql_execute(query, fetch_result=False)
     m_conn.commit()
-    m_conn.close()
+    
     # if mysql_conn.mysql_obj().mysql_cursor().rowcount < 1:
     #     data["status"] = "failed to submit answer keys"
     #     return responseHandler.responseBody(status_code='3015', data=data)

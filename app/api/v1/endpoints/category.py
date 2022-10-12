@@ -21,7 +21,7 @@ async def get_categories():
     query = f"SELECT * from categories"
     m_conn = mysql_conn.mysql_obj()
     data = m_conn.mysql_execute(query, fetch_result=True)
-    m_conn.close()
+    
     if not data:
         return responseHandler.responseBody(status_code='3002')
     return responseHandler.responseBody(status_code='2002', data=data)
@@ -40,6 +40,6 @@ async def add_category(request: Request,Authorization = Header(default=None)):
     if m_conn.mysql_cursor().rowcount < 1:
         data["status"] = "failed to insert"
         return responseHandler.responseBody(status_code='3008', data=data)
-    m_conn.close()
+    
     data["status"] = "Category added"
     return responseHandler.responseBody(status_code='2008', data=data)

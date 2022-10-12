@@ -21,7 +21,7 @@ async def add_subject(request: Request, Authorization=Header(default=None)):
     m_conn = mysql_conn.mysql_obj()
     m_conn.mysql_execute(query, fetch_result=False)
     m_conn.commit()
-    m_conn.close()
+    
     data["status"] = "Level added"
     return responseHandler.responseBody(status_code='2013', data=data)
 
@@ -31,7 +31,7 @@ async def get_level():
     m_conn = mysql_conn.mysql_obj()
     query = f"SELECT * FROM level"
     data = m_conn.mysql_execute(query, fetch_result=True)
-    m_conn.close()
+    
     if not data:
         return responseHandler.responseBody(status_code='3014')
     return responseHandler.responseBody(status_code='2014', data=data)

@@ -16,7 +16,7 @@ async def get_categories():
     query = f"SELECT * FROM quiz INNER JOIN categories ON categories.cat_id=quiz.cat_id"
     m_conn = mysql_conn.mysql_obj()
     data = m_conn.mysql_execute(query, fetch_result=True)
-    m_conn.close()
+    
     if not data:
         return responseHandler.responseBody(status_code='3003')
     return responseHandler.responseBody(status_code='2003', data=data)
@@ -35,7 +35,7 @@ async def get_categories(stu_id:str =None):
             if  len(data_[0]['ans_keys']) > 4 :
                 quiz_submitted_by_user = True
         data[i]['quiz_submitted_by_user'] = quiz_submitted_by_user
-    m_conn.close()
+    
     if not data:
         return responseHandler.responseBody(status_code='3004')
     return responseHandler.responseBody(status_code='2004', data=data)
@@ -47,7 +47,7 @@ async def get_category(cat_id: str):
     m_conn = mysql_conn.mysql_obj()
     query = f"SELECT * FROM quiz INNER JOIN categories ON categories.cat_id=quiz.cat_id WHERE quiz.active=1 AND quiz.cat_id={cat_id}"
     data = m_conn.mysql_execute(query, fetch_result=True)
-    m_conn.close()
+    
     if not data:
         return responseHandler.responseBody(status_code='3005')
     return responseHandler.responseBody(status_code='2005', data=data)
@@ -57,7 +57,7 @@ async def get_quiz_detail(id: str):
     m_conn = mysql_conn.mysql_obj()
     query = f"SELECT * FROM quiz WHERE q_id = {id}"
     data = m_conn.mysql_execute(query, fetch_result=True)
-    m_conn.close()
+    
     if not data:
         return responseHandler.responseBody(status_code='3003')
     return responseHandler.responseBody(status_code='2003', data=data)
@@ -76,7 +76,7 @@ async def add_quiz(request: Request, Authorization=Header(default=None)):
     if m_conn.mysql_cursor().rowcount < 1:
         data["status"] = "failed to insert quiz"
         return responseHandler.responseBody(status_code='3008', data=data)
-    m_conn.close()
+    
     data["status"] = "Quiz added"
     return responseHandler.responseBody(status_code='2008', data=data)
 
@@ -97,7 +97,7 @@ async def get_quiz_start_time_and(request: Request):
         m_conn.commit()
         query = f"SELECT quiz.time_per_qstn_ms, ans_sheet.started_at FROM quiz RIGHT JOIN ans_sheet ON quiz.q_id=ans_sheet.q_id WHERE ans_sheet.student_id = {stu_id} AND ans_sheet.q_id ={q_id}"
         data = m_conn.mysql_execute(query, fetch_result=True)
-    m_conn.close()
+    
     return responseHandler.responseBody(status_code='2003', data=data)
 
 
