@@ -42,6 +42,8 @@ class returnResponse:
                 body["message"] = "Student registration done"
             if status_code == "2019":
                 body["message"] = "Question set added"
+            if status_code == "2020":
+                body["message"] = "Certificate found"
 
 
         else:
@@ -86,6 +88,8 @@ class returnResponse:
                 body["message"] = "Student registration failed"
             if status_code == "3403":
                 body["message"] = "Session expired"
+            if status_code == "3020":
+                body["message"] = "Certificate not found"
 
         return body
 
