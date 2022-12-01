@@ -1,17 +1,18 @@
 import json
 
+from fastapi import Request, APIRouter, Depends, Header
+
 from app.api.v1.validator import if_request_valid
 from app.auth.auth_bearer import JWTBearer
 from app.auth.auth_handler import decodeJWT
 from app.utilities import mysql_conn
-from fastapi import Request, APIRouter, Depends,Header
-
 from app.utilities.response import returnResponse
 
 router = APIRouter()
 responseHandler = returnResponse()
 
-@router.post("/add/submit_ans",dependencies=[Depends(JWTBearer())])
+
+@router.post("/add/submit_ans", dependencies=[Depends(JWTBearer())])
 async def submit_answer(request: Request, Authorization=Header(default=None)):
     data = {}
     m_conn = mysql_conn.mysql_obj()
@@ -24,15 +25,15 @@ async def submit_answer(request: Request, Authorization=Header(default=None)):
     if not if_request_valid('super', decodeJWT(Authorization.replace('Bearer ', ''))['user_id']):
         # if non admin
         query = f"UPDATE ans_sheet SET ans_keys = '{answer_data}', marks_obtained = {marks_obtained} WHERE student_id = {student_id} AND q_id = {quiz_id}"
-    else :
+    else:
         query = f"INSERT INTO ans_sheet (student_id,q_id,ans_keys,marks_obtained) VALUES ({student_id},{quiz_id} ,'{answer_data}',{marks_obtained})"
-
 
     m_conn.mysql_execute(query, fetch_result=False)
     m_conn.commit()
     data["status"] = "Answer sheet submitted"
     m_conn.close()
     return responseHandler.responseBody(status_code='2015', data=data)
+
 
 def __evaluate_answer_sheet(m_conn, quiz_id: str = None, student_id: str = None, answer_data: dict = {}):
     query = f"SELECT ques_id, content,opt1,opt2,opt3,opt4,ans FROM mcqs where q_id = {quiz_id};"
@@ -66,7 +67,8 @@ def __evaluate_answer_sheet(m_conn, quiz_id: str = None, student_id: str = None,
     else:
         return responseHandler.responseBody(status_code='3016', data=questions_data)
 
-@router.post("/get/answer-sheet",dependencies=[Depends(JWTBearer())])
+
+@router.post("/get/answer-sheet", dependencies=[Depends(JWTBearer())])
 async def fetch_submitted_answer_sheet(request: Request):
     body = await request.json()
     quiz_id = body['q_id']
@@ -98,10 +100,13 @@ async def fetch_submitted_answer_sheet(request: Request):
 
 
 @router.get("/result/get-ranking/{q_id}")
-async def get_quiz_start_time_and(q_id:str):
+async def get_quiz_start_time_and(q_id: str):
     m_conn = mysql_conn.mysql_obj()
-    query = f'select users.regId, ans_sheet.marks_obtained ,users.name from ans_sheet inner join users ON users.regId = ans_sheet.student_id where ans_sheet.marks_obtained is not null and q_id ={q_id} order by marks_obtained desc;'
+    query = f'select users.regId, ans_sheet.marks_obtained ,users.name from ans_sheet inner join users ' \
+            f'ON users.regId = ans_sheet.student_id where ans_sheet.marks_obtained is not null and q_id ={q_id} order by marks_obtained desc;'
     data = m_conn.mysql_execute(query, fetch_result=True)
+    # TODO: if we get any duplicate values for ans_sheet.marks_obtained then we will send the duplicates along with users.regId
+    #  to a method where it will sort them acc. to their DOB/Class
     m_conn.close()
     return responseHandler.responseBody(status_code='2003', data=data)
 
@@ -113,7 +118,6 @@ async def git_pull():
         output = subprocess.check_output(['git', 'pull'], stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
         return ("Exception on process, rc=", e.returncode, "output=", e.output)
-    return responseHandler.responseBody(status_code='2003', data=output)
-@router.get("/git/worked")
-async def worked():
-    return responseHandler.responseBody(status_code='2003', data='git worjed')
+    return responseHandler.responseBody(status_code='1', data=output)
+
+

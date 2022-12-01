@@ -2,6 +2,8 @@ class returnResponse:
     def __generate_response_msg_from_code(self, status_code: str):
         body = {}
         body["code"] = status_code
+        if status_code == '1':
+            body["message"] = "Default success msg"
         if status_code.startswith("2"):
             body["status"] = "success"
             if status_code == "2001":
