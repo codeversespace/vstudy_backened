@@ -37,9 +37,6 @@ async def add_category(request: Request,Authorization = Header(default=None)):
     m_conn = mysql_conn.mysql_obj()
     m_conn.mysql_execute(query, fetch_result=False)
     m_conn.commit()
-    if m_conn.mysql_cursor().rowcount < 1:
-        data["status"] = "failed to insert"
-        return responseHandler.responseBody(status_code='3008', data=data)
     m_conn.close()
     data["status"] = "Category added"
     return responseHandler.responseBody(status_code='2008', data=data)

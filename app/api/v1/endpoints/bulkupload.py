@@ -85,6 +85,7 @@ async def submit(file: UploadFile = File(...), class_st=Form(...), subject=Form(
     m_conn.mysql_execute(query, fetch_result=False)
     m_conn.commit()
     m_conn.close()
+    
     return True
 
 @router.post("/add/excel-questions")
@@ -103,10 +104,11 @@ async def create_question_profile(request: Request, Authorization=Header(default
     m_conn = mysql_conn.mysql_obj()
     m_conn.mysql_execute(query, fetch_result=False)
     m_conn.commit()
+    m_conn.close()
     # if m_conn.mysql_cursor().rowcount < 1:
     #     data["status"] = "failed to insert"
     #     return responseHandler.responseBody(status_code='3008', data=data)
-    m_conn.close()
+    
     data["status"] = "Question set added"
     return responseHandler.responseBody(status_code='2008', data=data)
 
@@ -159,7 +161,6 @@ def create_auto_quiz():
             #     break
             #get question list from quiz
             query_quiz = f"SELECT question_list from quiz where q_id = {quiz_id}"
-            m_conn = mysql_conn.mysql_obj()
             data = m_conn.mysql_execute(query_quiz, fetch_result=True)
 
             print(data)
@@ -181,6 +182,7 @@ def create_auto_quiz():
     m_conn.mysql_execute(query_add_q_l, fetch_result=False)
     m_conn.commit()
     m_conn.close()
+    
 # create_auto_quiz()
 # create_auto_quiz()
 

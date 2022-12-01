@@ -102,4 +102,5 @@ async def get_quiz_start_time_and(q_id:str):
     m_conn = mysql_conn.mysql_obj()
     query = f'select users.regId, ans_sheet.marks_obtained ,users.name from ans_sheet inner join users ON users.regId = ans_sheet.student_id where ans_sheet.marks_obtained is not null and q_id ={q_id} order by marks_obtained desc;'
     data = m_conn.mysql_execute(query, fetch_result=True)
+    m_conn.close()
     return responseHandler.responseBody(status_code='2003', data=data)

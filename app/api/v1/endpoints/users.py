@@ -38,8 +38,8 @@ async def check_if_user_exist(reg_id):
     query = f"SELECT * from users WHERE regId  = '{reg_id}'"
     data = m_conn.mysql_execute(query, fetch_result=True)
     m_conn.close()
-    if not data:
-        return responseHandler.responseBody(status_code='3001', msg="Invalid Credentials")
+    if 'error' in data:
+        return responseHandler.responseBody(status_code='3001', data=data, msg="Invalid Credentials" )
     return responseHandler.responseBody(status_code='2001', data=data)
 
 @router.post("/user/is-exist")

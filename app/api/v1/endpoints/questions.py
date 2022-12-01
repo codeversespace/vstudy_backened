@@ -26,8 +26,13 @@ async def get_questions_from_category(cat_id: str):
 @router.get("/question/quiz/{quiz_id}", dependencies=[Depends(JWTBearer())])
 async def get_questions_from_quiz_id(quiz_id: str):
     m_conn = mysql_conn.mysql_obj()
-    query = f"SELECT q_id,ques_id,content,opt1,opt2,opt3,opt4 FROM mcqs where q_id = {quiz_id};"
+    query = f"SELECT question_list from quiz where q_id = {quiz_id}"
+    ques_id_list = m_conn.mysql_execute(query, fetch_result=True)[0]['question_list']
+    ques_id_str = str(ques_id_list)[1:-1]
+    print(ques_id_str)
+    query = f"SELECT q_id,ques_id,content,opt1,opt2,opt3,opt4 FROM mcqs where ques_id in ({ques_id_str});"
     data = m_conn.mysql_execute(query, fetch_result=True)
+    m_conn.close()
     if not data:
         return responseHandler.responseBody(status_code='3007')
     return responseHandler.responseBody(status_code='2007', data=data)
@@ -38,6 +43,7 @@ async def get_questions_from_quiz_id(quiz_id: str):
     m_conn = mysql_conn.mysql_obj()
     query = f"SELECT * FROM mcqs where q_id = {quiz_id};"
     data = m_conn.mysql_execute(query, fetch_result=True)
+    m_conn.close()
     if not data:
         return responseHandler.responseBody(status_code='3007')
     return responseHandler.responseBody(status_code='2007', data=data)
@@ -55,9 +61,7 @@ async def add_question(request: Request, Authorization=Header(default=None)):
             f"'{body['option1']}','{body['option2']}','{body['option3']}','{body['option4']}','{body['answer']}','{body['added_by']}',{body['sub_id']},{body['class']})"
     m_conn.mysql_execute(query, fetch_result=False)
     m_conn.commit()
-    if m_conn.mysql_cursor().rowcount < 1:
-        data["status"] = "failed to add question"
-        return responseHandler.responseBody(status_code='3008', data=data)
+    m_conn.close()
     data["status"] = "question added"
     return responseHandler.responseBody(status_code='2008', data=data)
 

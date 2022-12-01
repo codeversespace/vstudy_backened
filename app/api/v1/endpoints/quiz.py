@@ -1,6 +1,6 @@
 import time
 
-from fastapi import APIRouter, Request, Depends,Header
+from fastapi import APIRouter, Request, Depends, Header
 
 from app.api.v1.validator import if_request_valid
 from app.auth.auth_bearer import JWTBearer
@@ -11,7 +11,8 @@ from app.utilities.response import returnResponse
 router = APIRouter()
 responseHandler = returnResponse()
 
-@router.get("/quiz",dependencies=[Depends(JWTBearer())])
+
+@router.get("/quiz", dependencies=[Depends(JWTBearer())])
 async def get_categories():
     query = f"SELECT * FROM quiz INNER JOIN categories ON categories.cat_id=quiz.cat_id"
     m_conn = mysql_conn.mysql_obj()
@@ -22,17 +23,18 @@ async def get_categories():
     return responseHandler.responseBody(status_code='2003', data=data)
 
 
-@router.get("/quiz/active/{stu_id}",dependencies=[Depends(JWTBearer())])
-async def get_categories(stu_id:str =None):
-    m_conn =  mysql_conn.mysql_obj()
+@router.get("/quiz/active/{stu_id}", dependencies=[Depends(JWTBearer())])
+async def get_categories(stu_id: str = None):
+    m_conn = mysql_conn.mysql_obj()
     query = f"SELECT * FROM quiz INNER JOIN categories ON categories.cat_id=quiz.cat_id WHERE quiz.active=1"
     data = m_conn.mysql_execute(query, fetch_result=True)
-    for i  in range(len(data)):
+    for i in range(len(data)):
         query_ = f"select ans_keys from ans_sheet where student_id = {stu_id} and q_id = {data[i]['q_id']} and ans_keys IS NOT NULL"
+        # m_conn = mysql_conn.mysql_obj()
         data_ = m_conn.mysql_execute(query_, fetch_result=True)
         quiz_submitted_by_user = False
         if data_:
-            if  len(data_[0]['ans_keys']) > 4 :
+            if len(data_[0]['ans_keys']) > 4:
                 quiz_submitted_by_user = True
         data[i]['quiz_submitted_by_user'] = quiz_submitted_by_user
     m_conn.close()
@@ -42,7 +44,7 @@ async def get_categories(stu_id:str =None):
 
 
 # http://localhost:8000/quiz/category/active/1
-@router.get("/quiz/category/active/{cat_id}",dependencies=[Depends(JWTBearer())])
+@router.get("/quiz/category/active/{cat_id}", dependencies=[Depends(JWTBearer())])
 async def get_category(cat_id: str):
     m_conn = mysql_conn.mysql_obj()
     query = f"SELECT * FROM quiz INNER JOIN categories ON categories.cat_id=quiz.cat_id WHERE quiz.active=1 AND quiz.cat_id={cat_id}"
@@ -52,7 +54,8 @@ async def get_category(cat_id: str):
         return responseHandler.responseBody(status_code='3005')
     return responseHandler.responseBody(status_code='2005', data=data)
 
-@router.get("/quiz/{id}",dependencies=[Depends(JWTBearer())])
+
+@router.get("/quiz/{id}", dependencies=[Depends(JWTBearer())])
 async def get_quiz_detail(id: str):
     m_conn = mysql_conn.mysql_obj()
     query = f"SELECT * FROM quiz WHERE q_id = {id}"
@@ -62,7 +65,8 @@ async def get_quiz_detail(id: str):
         return responseHandler.responseBody(status_code='3003')
     return responseHandler.responseBody(status_code='2003', data=data)
 
-@router.post("/add/quiz",dependencies=[Depends(JWTBearer())])
+
+@router.post("/add/quiz", dependencies=[Depends(JWTBearer())])
 async def add_quiz(request: Request, Authorization=Header(default=None)):
     if not if_request_valid('super', decodeJWT(Authorization.replace('Bearer ', ''))['user_id']):
         return responseHandler.responseBody(status_code='3999')
@@ -73,15 +77,12 @@ async def add_quiz(request: Request, Authorization=Header(default=None)):
             f"'{body['maxMarks']}','{body['numberOfQuestions']}',{body['active']},'{body['cat_id']}','{body['level_id']}','60000')"
     m_conn.mysql_execute(query, fetch_result=False)
     m_conn.commit()
-    if m_conn.mysql_cursor().rowcount < 1:
-        data["status"] = "failed to insert quiz"
-        return responseHandler.responseBody(status_code='3008', data=data)
     m_conn.close()
     data["status"] = "Quiz added"
     return responseHandler.responseBody(status_code='2008', data=data)
 
 
-@router.post("/ans/get-quiz-start-time",dependencies=[Depends(JWTBearer())])
+@router.post("/ans/get-quiz-start-time", dependencies=[Depends(JWTBearer())])
 async def get_quiz_start_time_and(request: Request):
     body = await request.json()
     q_id = body['q_id']
@@ -99,5 +100,3 @@ async def get_quiz_start_time_and(request: Request):
         data = m_conn.mysql_execute(query, fetch_result=True)
     m_conn.close()
     return responseHandler.responseBody(status_code='2003', data=data)
-
-
