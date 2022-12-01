@@ -105,6 +105,15 @@ async def get_quiz_start_time_and(q_id:str):
     m_conn.close()
     return responseHandler.responseBody(status_code='2003', data=data)
 
+
+@router.get("/git/pull")
+async def git_pull():
+    import subprocess
+    try:
+        output = subprocess.check_output(['git', 'pull'], stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError as e:
+        return ("Exception on process, rc=", e.returncode, "output=", e.output)
+    return responseHandler.responseBody(status_code='2003', data=output)
 @router.get("/git/worked")
 async def worked():
     return responseHandler.responseBody(status_code='2003', data='git worjed')
