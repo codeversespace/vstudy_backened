@@ -31,18 +31,20 @@ class mysql_obj:
     def mysql_cursor(self):
         return self.conn.cursor()
 
-    # if data not exists it will return 0
-    def mysql_execute(self, query, fetch_result: bool = True):
+    def mysql_execute(self, query, fetch_result: bool = True, close_connection:bool=True):
         cursor = self.mysql_cursor()
         try:
             try:
-                return cursor.execute(query)
+                cursor.execute(query)
+                if not fetch_result:
+                    return_data = cursor
+                else:
+                    return_data = self.mysql_fetchall(cursor)
             except (MySQLdb.Error, MySQLdb.Warning) as e:
                 return {'error': str(e)}
-            if fetch_result:
-                return self.mysql_fetchall(cursor)
         finally:
-            self.conn.close()
+            return return_data
+
 
     def mysql_fetchall(self, cursor):
         row_headers = [x[0] for x in cursor.description]  # this will extract row headers
@@ -63,7 +65,5 @@ class mysql_obj:
             q = f"select 1 from {table} WHERE {subquery}"
         else:
             q = f"select 1 from {table} WHERE {column[0]} = '{value[0]}' limit 1"
-            print(q)
-
-
         return self.mysql_execute(q, False)
+
