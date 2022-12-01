@@ -104,3 +104,7 @@ async def get_quiz_start_time_and(q_id:str):
     data = m_conn.mysql_execute(query, fetch_result=True)
     m_conn.close()
     return responseHandler.responseBody(status_code='2003', data=data)
+
+@router.get("/git/worked")
+async def worked():
+    return responseHandler.responseBody(status_code='2003', data='git worjed')
