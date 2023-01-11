@@ -121,6 +121,6 @@ async def git_pull():
     return responseHandler.responseBody(status_code='1', data=output)
 
 @router.get("/test/{name}")
-async def test():
-    return {'name':'lala'}
+async def test(name):
+    return {'name':name}
 
