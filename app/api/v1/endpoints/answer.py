@@ -120,4 +120,7 @@ async def git_pull():
         return ("Exception on process, rc=", e.returncode, "output=", e.output)
     return responseHandler.responseBody(status_code='1', data=output)
 
+@router.get("/test/{name}")
+async def test():
+    return {'name':'lala'}
 
